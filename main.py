@@ -10,12 +10,14 @@ class Point:
 		self.y = y
 
 class Bone:
-	def __init__(self, name: str, length: float, function: Callable[[float], float], children: list):
+	def __init__(self, name: str, length: float, r0: float = 0, f: Callable[[float], float] = None, sim: bool = True, c: list = []):
 		self.name = name
 		self.length = length
-		self.children = children
-		self.function = function
-		self.rotation = 0
+		self.children = c
+		self.function = f
+		self.simulate = sim
+		self.rotation = r0
+		self.angular_vel = 0
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
 def map(x: float, x0: float, x1: float, y0: float, y1: float):
@@ -33,10 +35,28 @@ def to_screen_pos(pos: Point, center: Point, radius: float, screen: pygame.Surfa
 	return x, y
 
 def update_bone(bone: Bone, t: float):
-	bone.rotation = bone.function(t)
+	if bone.function is not None:
+		bone.rotation = bone.function(t)
 	
 	for bone_child in bone.children:
 		update_bone(bone_child, t)
+		
+def sim_bone(bone: Bone, rot: float, dt: float):
+	global_rot = rot + bone.rotation
+	
+	if bone.simulate:
+		bone.rotation += bone.angular_vel*dt
+		
+		weight = bone.length * 100*cos(global_rot) * dt
+		drag = bone.angular_vel * 50 * dt
+		
+		# if bone.angular_vel:
+		
+		
+		bone.angular_vel += (weight - drag) * dt
+	
+	for bone_child in bone.children:
+		sim_bone(bone_child, global_rot, dt)
 
 center = Point(0, 0)
 radius = 1.5
@@ -52,21 +72,30 @@ def draw_bone(bone: Bone, pos: Point, parent_rotation: float, screen: pygame.Sur
 		draw_bone(bone_child, next_pos, rotation, screen)
 
 pelvis = \
-	Bone("pelvis", 0, lambda t: 0, [
-		Bone("femur_l", 0.5, lambda t: -0.4, [
-			Bone("tibia_l", 0.4, lambda t: 0.2 + 0.5*t, [])
+	Bone("pelvis", 0, r0=pi/2 + 0.2, sim=False, c=[
+		Bone("femur_l", 0.5, r0=-0.4, c=[
+			Bone("tibia_l", 0.4, r0=0.2)
 		]),
-		Bone("femur_r", 0.5, lambda t: 0.5 + 0.3*cos(3*t), [
-			Bone("tibia_r", 0.4, lambda t: -0.2 - 0.1*cos(3*t), [])
+		Bone("femur_r", 0.5, r0=0.5, c=[
+			Bone("tibia_r", 0.4, r0=-0.2)
 		]),
-		Bone("spine", 0.7, lambda t: -pi, [
-			Bone("head", 0.1, lambda t: 0.2*cos(8*t), []),
-			Bone("upper_arm_l", 0.4, lambda t: pi + 0.5 + 0.1*cos(5*t), [
-				Bone("lower_arm_l", 0.4, lambda t: -0.3 + 0.2*cos(5*t), [])
-			]),
-			Bone("upper_arm_r", 0.4, lambda t: pi - 0.5 + 0.1*cos(5*t), [
-				Bone("lower_arm_r", 0.4, lambda t: 0.4 + 0.4*cos(5*t), [])
+		Bone("spine1", 0.4, r0=-pi, sim=False, c=[
+			Bone("spine2", 0.3, r0=0, c=[
+				Bone("head", 0.1, r0=0),
+				Bone("upper_arm_l", 0.4, r0=pi+0.5, c=[
+					Bone("lower_arm_l", 0.4, r0=-0.3)
+				]),
+				Bone("upper_arm_r", 0.4, r0=pi-0.5, c=[
+					Bone("lower_arm_r", 0.4, r0=+0.3)
+				])
 			])
+		])
+	])
+
+test_bone = \
+	Bone("root", 0, r0=0, sim=False, c=[
+		Bone("b1", 0.5, r0=0.5, c=[
+			Bone("b2", 0.5, r0=0)
 		])
 	])
 
@@ -75,6 +104,7 @@ height = 900
 screen = pygame.display.set_mode((width, height))
 
 t = 0
+fps = 60
 clock = pygame.time.Clock()
 while True:
 	for event in pygame.event.get():
@@ -84,9 +114,13 @@ while True:
 	
 	screen.fill((0, 0, 0))
 	
-	update_bone(pelvis, t)
-	draw_bone(pelvis, Point(0, 0), pi/2, screen)
+	# update_bone(pelvis, t)
+	# draw_bone(pelvis, Point(0, 0), 0, screen)
+	
+	# update_bone(test_bone, t)
+	sim_bone(test_bone, 0, 1/fps)
+	draw_bone(test_bone, Point(0, 0), 0, screen)
 	
 	pygame.display.update()
 	
-	t += clock.tick(60) / 1000
+	t += clock.tick(fps) / 1000
