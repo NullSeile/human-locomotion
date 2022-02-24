@@ -47,11 +47,8 @@ def sim_bone(bone: Bone, rot: float, dt: float):
 	if bone.simulate:
 		bone.rotation += bone.angular_vel*dt
 		
-		weight = bone.length * 100*cos(global_rot) * dt
-		drag = bone.angular_vel * 50 * dt
-		
-		# if bone.angular_vel:
-		
+		weight = bone.length * 10*cos(global_rot)
+		drag = bone.angular_vel * 1
 		
 		bone.angular_vel += (weight - drag) * dt
 	
@@ -118,8 +115,8 @@ while True:
 	# draw_bone(pelvis, Point(0, 0), 0, screen)
 	
 	# update_bone(test_bone, t)
-	sim_bone(test_bone, 0, 1/fps)
-	draw_bone(test_bone, Point(0, 0), 0, screen)
+	sim_bone(pelvis, 0, 2/fps)
+	draw_bone(pelvis, Point(0, 0), 0, screen)
 	
 	pygame.display.update()
 	
