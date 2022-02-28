@@ -70,7 +70,6 @@ def init_bone(bone: Bone, rot: float, pos: Vec2, world: b2World):
 	L = Vec2(cos(bone.angle), sin(bone.angle)) * bone.length
 	bone.pos = pos + L * 0.5
 	
-	
 	if bone.length == 0:
 		bone.shape = b2CircleShape(radius=0.02)
 		
@@ -82,10 +81,10 @@ def init_bone(bone: Bone, rot: float, pos: Vec2, world: b2World):
 			# maskBits=0x001
 		)
 		
-		bone.body = world.CreateStaticBody(fixtures=fixtureDef, position=(bone.pos.x, bone.pos.y))
+		bone.body = world.CreateDynamicBody(fixtures=fixtureDef, position=(bone.pos.x, bone.pos.y))
 		
 	else:
-		height = 0.02
+		height = 0.05
 		bone.shape.SetAsBox(bone.length/2, height/2)
 		
 		fixtureDef = b2FixtureDef(
@@ -103,14 +102,14 @@ def init_bone(bone: Bone, rot: float, pos: Vec2, world: b2World):
 			fixtures=fixtureDef,
 			position=(bone.pos.x, bone.pos.y),
 			angle=bone.angle,
-			angularDamping=5,
+			angularDamping=10,
 			linearDamping=1
 		)
 
 	for bone_child in bone.children:
 		init_bone(bone_child, bone.angle, pos + L, world)
 		
-		world.CreateRevoluteJoint(
+		world.CreateWeldJoint(
 			bodyA=bone.body,
 			bodyB=bone_child.body,
 			localAnchorA=(bone.length/2, 0),
@@ -127,15 +126,15 @@ def update_bone(bone: Bone):
 
 
 pelvis = \
-	Bone("pelvis", 0, r0=-pi/2 + 0.2, sim=False, c=[
+	Bone("pelvis", 0, r0=-pi/2 + 0.2, sim=True, c=[
 		Bone("femur_l", 0.5, r0=-0.4, c=[
 			Bone("tibia_l", 0.4, r0=0.2)
 		]),
 		Bone("femur_r", 0.5, r0=0.5, c=[
 			Bone("tibia_r", 0.4, r0=-0.2)
 		]),
-		Bone("spine1", 0.4, r0=-pi, sim=False, c=[
-			Bone("spine2", 0.3, r0=0, sim=False, c=[
+		Bone("spine1", 0.4, r0=-pi, sim=True, c=[
+			Bone("spine2", 0.3, r0=0, sim=True, c=[
 				Bone("head", 0.1, r0=0),
 				Bone("upper_arm_l", 0.4, r0=pi+0.5, c=[
 					Bone("lower_arm_l", 0.4, r0=-0.3)
@@ -158,18 +157,18 @@ root = pelvis
 
 world = b2World(gravity=(0, -9.8))
 
-# floor_shape = b2PolygonShape()
-# floor_shape.SetAsBox(2, 0.1)
-#
-# floor_fixt = b2FixtureDef()
-# floor_fixt.shape = floor_shape
-#
-# world.CreateStaticBody(fixtures=floor_fixt, position=(0, -1.2))
+floor_shape = b2PolygonShape()
+floor_shape.SetAsBox(2, 0.1)
+
+floor_fixt = b2FixtureDef()
+floor_fixt.shape = floor_shape
+
+world.CreateStaticBody(fixtures=floor_fixt, position=(0, -1.2))
 
 init_bone(root, 0, Vec2(0, 0), world)
 
 width = 900
-height = 900
+height = 600
 screen = pygame.display.set_mode((width, height))
 
 t = 0
