@@ -12,18 +12,26 @@ from utils import to_screen_pos
 Vec2 = Tuple[float, float]
 
 class BodyPart:
-	def __init__(self, vertices, pos: Vec2, angle: float, world: b2World, color: Tuple[int, int, int] = (255, 255, 255), dynamic: bool = True):
+	def __init__(self, vertices, pos: Vec2, angle: float, world: b2World, color: Tuple[int, int, int] = (255, 255, 255),
+				 dynamic: bool = True, categoryBits = None):
 		self.color = color
 		
 		self.shape = b2PolygonShape()
 		self.shape.vertices = vertices
 		
+		maskBits = None
+		if categoryBits is None:
+			categoryBits = 0x0001 if dynamic else 0x0002
+			maskBits = 0xFFFF & ~0x0001 if dynamic else 0xFFFF
+		else:
+			maskBits = 0xFFFF
+		
 		self.fixture = b2FixtureDef(
 			shape=self.shape,
 			density=1,
 			friction=0.5,
-			categoryBits=0x0001 if dynamic else 0x0002,
-			maskBits=0x0002 if dynamic else 0x0001
+			categoryBits=categoryBits,
+			maskBits=maskBits
 		)
 		self.body: b2Body = world.CreateBody(
 			type=b2_dynamicBody if dynamic else b2_staticBody,
@@ -49,7 +57,7 @@ def CreateJoint(bodyA: BodyPart, bodyB: BodyPart, anchorA: Vec2, anchorB: Vec2, 
 		localAnchorA=anchorA,
 		localAnchorB=anchorB,
 		enableMotor=True,
-		maxMotorTorque=1000,
+		maxMotorTorque=500,
 		# enableLimit=(lowerAngle is not None) and (upperAngle is not None),
 		# lowerAngle=lowerAngle,
 		# upperAngle=upperAngle,
@@ -72,26 +80,30 @@ if __name__ == "__main__":
 	height = 600
 	screen = pygame.display.set_mode((width, height))
 	
+	pos = (0, -10)
+	
 	PRIMARY_COLOR = (255, 255, 255)
 	SECONDARY_COLOR = (200, 200, 200)
 	parts: Dict[str, BodyPart] = {
-		"floor": BodyPart([(-10, 0.1), (10, 0.1), (10, -0.1), (-10, -0.1)], (0, -20), 0, world, dynamic=False),
+		"floor": BodyPart([(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)], (0, -30), 0, world, dynamic=False),
 		
-		"biceps_b": BodyPart([(1.5,4.5), (-1.5,4.5), (-1.5,-4.5), (1.5,-4.5)], (0, 0), 0, world, color=SECONDARY_COLOR),
-		"arm_b": BodyPart([(1,4), (-1,4), (-1,-4), (1,-4)], (0, 0), 0, world, color=SECONDARY_COLOR),
+		"biceps_b": BodyPart([(1.5,4.5), (-1.5,4.5), (-1.5,-4.5), (1.5,-4.5)], pos, 0, world, color=SECONDARY_COLOR),
+		"arm_b": BodyPart([(1,4), (-1,4), (-1,-4), (1,-4)], pos, 0, world, color=SECONDARY_COLOR),
 		
-		"thigh_b": BodyPart([(2,4.5), (-2,4.5), (-2,-4.5), (2,-4.5)], (0, 0), 0, world, color=SECONDARY_COLOR),
-		"leg_b": BodyPart([(1,-1.5), (1,8.5), (-1,8.5), (-1,-1.5)], (0, 0), 0, world, color=SECONDARY_COLOR),
+		"thigh_b": BodyPart([(2,4.5), (-2,4.5), (-2,-4.5), (2,-4.5)], pos, 0, world, color=SECONDARY_COLOR),
+		"leg_b": BodyPart([(1,-1.5), (1,8.5), (-1,8.5), (-1,-1.5)], pos, 0, world, color=SECONDARY_COLOR),
 		
-		"head": BodyPart([(2.5,2.5), (-2.5,2.5), (-2.5,-2.5), (2.5,-2.5)], (0, 0), 0, world, color=PRIMARY_COLOR),
-		"torso": BodyPart([(3,6), (-3,6), (-3,-6), (3,-6)], (0, 0), 0, world, color=PRIMARY_COLOR),
+		"head": BodyPart([(2.5,2.5), (-2.5,2.5), (-2.5,-2.5), (2.5,-2.5)], pos, 0, world, color=PRIMARY_COLOR),
+		"torso": BodyPart([(3,6), (-3,6), (-3,-6), (3,-6)], pos, 0, world, color=PRIMARY_COLOR),
 		
-		"thigh_f": BodyPart([(2,4.5), (-2,4.5), (-2,-4.5), (2,-4.5)], (0, 0), 0, world, color=PRIMARY_COLOR),
-		"leg_f": BodyPart([(1,-1.5), (1,8.5), (-1,8.5), (-1,-1.5)], (0, 0), 0, world, color=PRIMARY_COLOR),
+		"thigh_f": BodyPart([(2,4.5), (-2,4.5), (-2,-4.5), (2,-4.5)], pos, 0, world, color=PRIMARY_COLOR),
+		"leg_f": BodyPart([(1,-1.5), (1,8.5), (-1,8.5), (-1,-1.5)], pos, 0, world, color=PRIMARY_COLOR),
 		# "foot_f": BodyPart([(4,1.5),(-1,1.5),(-1,-1.5),(4,-1.5)], (0, 0), 0, world),
 		
-		"biceps_f": BodyPart([(1.5,4.5), (-1.5,4.5), (-1.5,-4.5), (1.5,-4.5)], (0, 0), 0, world, color=PRIMARY_COLOR),
-		"arm_f": BodyPart([(1,4), (-1,4), (-1,-4), (1,-4)], (0, 0), 0, world, color=PRIMARY_COLOR),
+		"biceps_f": BodyPart([(1.5,4.5), (-1.5,4.5), (-1.5,-4.5), (1.5,-4.5)], pos, 0, world, color=PRIMARY_COLOR),
+		"arm_f": BodyPart([(1,4), (-1,4), (-1,-4), (1,-4)], pos, 0, world, color=PRIMARY_COLOR),
+		
+		"projectile": BodyPart([(-1,-1), (-1,1), (1,1), (1,-1)], (20, 5), 0, world, categoryBits=0x0004)
 	}
 
 	joints: Dict[str, b2RevoluteJoint] = {
@@ -109,6 +121,12 @@ if __name__ == "__main__":
 		"b_leg_1": CreateJoint(parts['torso'], parts['thigh_b'], (0, -6), (0, 4.5), world),
 		"b_leg_2": CreateJoint(parts['thigh_b'], parts['leg_b'], (0, -4.5), (0, 8.5), world),
 	}
+	
+	for j in joints.values():
+		j.motorEnabled=True
+	
+	proj = parts["projectile"]
+	proj.body.ApplyLinearImpulse((-70, 20), proj.body.worldCenter, True)
 	
 	# joints["f_arm_1"].motorSpeed = 5
 	# joints["b_arm_1"].motorSpeed = -5
@@ -138,7 +156,7 @@ if __name__ == "__main__":
 		world.Step(1 / fps, 6, 3)
 		
 		for b in parts.values():
-			b.draw(screen, (0, 0), 20)
+			b.draw(screen, (0, 0), 30)
 		
 		pygame.display.flip()
 		pygame.display.update()
