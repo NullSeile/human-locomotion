@@ -6,9 +6,9 @@
             "color": 1,
             "children": {
                 "arm_b": {
-                    "anchorA": [0, 5],
-                    "anchorB": [0, 4.5],
-                    "angle": {"min": 0, "max": 360}
+                    "anchorA": [0, -4.5],
+                    "anchorB": [0, 4],
+                    "angle": { "min": 0, "max": 360 }
                 }
             }
         },
@@ -79,8 +79,8 @@
             "color": 0,
             "children": {
                 "arm_f": {
-                    "anchorA": [0, 5],
-                    "anchorB": [0, 4.5]
+                    "anchorA": [0, -4.5],
+                    "anchorB": [0, 4]
                 }
             }
         },

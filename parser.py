@@ -3,7 +3,8 @@ from typing import Dict, Tuple
 from physics import Object, CreateJoint
 from Box2D import b2World, b2RevoluteJoint
 
-from utils import Vec2, div
+from utils import Vec2, div, add
+
 
 BODY_SCALE = 21
 
@@ -16,30 +17,39 @@ def parse_body(
 ) -> Tuple[Dict[str, Object], Dict[str, b2RevoluteJoint]]:
     bodyDef: dict = json.load(open(path))
     root = bodyDef["root"]
+    body = bodyDef["body"]
 
-    objs = dict()
-    joints = dict()
-    for key, part in bodyDef["body"].items():
+    objs: Dict[str, Object] = dict()
+    joints: Dict[str, b2RevoluteJoint] = dict()
+    for key, part in body.items():
         obj = Object(
             vertices=[div(v, BODY_SCALE) for v in part["vertices"]],
             world=world,
-            pos=pos,
             color=PRIMARY_COLOR if part["color"] == 0 else SECONDARY_COLOR,
             categoryBits=0x0002,
             maskBits=0xFFFF & ~0x0002,
         )
         objs[key] = obj
 
-    def init_part(part: str, pos: Vec2, angle: float):
-        print(part)
+    # For recursively initializing the position of the body parts
+    def init_part(part_id: str, pos: Vec2, angle: float):
+        objs[part_id].body.position = pos
 
-        # for child in objs[part]["children"]:
-        #     print(child)
-        # init_part(child, pos, angle)
-        # if parts[part].
+        partDef = body[part_id]
+        if "children" in partDef:
+            for child_id, data in partDef["children"].items():
+                anchorA = div(data["anchorA"], BODY_SCALE)
+                anchorB = div(data["anchorB"], BODY_SCALE)
+                joints[f"{part_id}-{child_id}"] = CreateJoint(
+                    bodyA=objs[part_id],
+                    bodyB=objs[child_id],
+                    anchorA=anchorA,
+                    anchorB=anchorB,
+                    world=world,
+                )
+                init_part(child_id, add(add(pos, anchorA), anchorB), angle)
 
     init_part(root, pos, angle)
-    # print(root)
 
     return objs, joints
 
