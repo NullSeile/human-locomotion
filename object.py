@@ -1,21 +1,18 @@
 from __future__ import annotations
-from typing import Tuple, Dict, List
+from typing import List
 import sys
 import pygame
 from pygame import gfxdraw
-from pygame.locals import QUIT
 from Box2D import (
     b2World,
     b2PolygonShape,
     b2FixtureDef,
     b2Body,
-    b2RevoluteJoint,
-    b2WeldJoint,
     b2_dynamicBody,
     b2_staticBody,
 )
 
-from utils import Vec2, Color, to_screen_pos, div
+from utils import Vec2, Color, to_screen_pos
 
 
 class Object:
@@ -47,8 +44,6 @@ class Object:
             fixtures=self.fixture,
             position=pos,
             angle=angle,
-            # angularDamping=10,
-            # linearDamping=1
         )
 
     def draw(self, screen: pygame.Surface, center: Vec2, radius: float):
@@ -61,35 +56,3 @@ class Object:
         gfxdraw.filled_polygon(screen, path, self.color)
         gfxdraw.aapolygon(screen, path, self.color)
         pygame.draw.polygon(screen, color=(120, 120, 120), points=path, width=1)
-
-
-def CreateJoint(
-    bodyA: Object,
-    bodyB: Object,
-    anchorA: Vec2,
-    anchorB: Vec2,
-    world: b2World,
-    lowerAngle: float = None,
-    upperAngle: float = None,
-    refAngle: float = 0,
-) -> b2RevoluteJoint:
-    return world.CreateRevoluteJoint(
-        bodyA=bodyA.body,
-        bodyB=bodyB.body,
-        localAnchorA=anchorA,
-        localAnchorB=anchorB,
-        enableMotor=True,
-        maxMotorTorque=0.1,
-        # enableLimit=(lowerAngle is not None) and (upperAngle is not None),
-        # lowerAngle=lowerAngle,
-        # upperAngle=upperAngle,
-        # referenceAngle=refAngle
-    )
-
-
-def CreateWeld(
-    bodyA: Object, bodyB: Object, anchorA: Vec2, anchorB: Vec2, world: b2World
-) -> b2WeldJoint:
-    return world.CreateWeldJoint(
-        bodyA=bodyA.body, bodyB=bodyB.body, localAnchorA=anchorA, localAnchorB=anchorB
-    )

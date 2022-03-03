@@ -1,9 +1,9 @@
 import json
 from typing import Dict, Tuple
-from physics import Object, CreateJoint
+from object import Object
 from Box2D import b2World, b2RevoluteJoint
 
-from utils import Vec2, div, add
+from utils import Vec2, div, add, sub
 
 
 BODY_SCALE = 21
@@ -40,14 +40,19 @@ def parse_body(
             for child_id, data in partDef["children"].items():
                 anchorA = div(data["anchorA"], BODY_SCALE)
                 anchorB = div(data["anchorB"], BODY_SCALE)
-                joints[f"{part_id}-{child_id}"] = CreateJoint(
-                    bodyA=objs[part_id],
-                    bodyB=objs[child_id],
-                    anchorA=anchorA,
-                    anchorB=anchorB,
-                    world=world,
+                joints[f"{part_id}-{child_id}"] = world.CreateRevoluteJoint(
+                    bodyA=objs[part_id].body,
+                    bodyB=objs[child_id].body,
+                    localAnchorA=anchorA,
+                    localAnchorB=anchorB,
+                    enableMotor=True,
+                    maxMotorTorque=0.5,
+                    # enableLimit=(lowerAngle is not None) and (upperAngle is not None),
+                    # lowerAngle=lowerAngle,
+                    # upperAngle=upperAngle,
+                    # referenceAngle=refAngle
                 )
-                init_part(child_id, add(add(pos, anchorA), anchorB), angle)
+                init_part(child_id, sub(add(pos, anchorA), anchorB), angle)
 
     init_part(root, pos, angle)
 
@@ -57,6 +62,7 @@ def parse_body(
 if __name__ == "__main__":
     from utils import RESORUCES_PATH
     import pygame
+    from pygame.locals import QUIT
     import sys
 
     world = b2World(gravity=(0, -9.8))
@@ -79,7 +85,7 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.locals.QUIT:
+            if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
 
