@@ -1,6 +1,8 @@
 import pygame
 from typing import Tuple
 
+RESORUCES_PATH = "./resources/"
+
 Vec2 = Tuple[float, float]
 Color = Tuple[int, int, int]
 
