@@ -1,4 +1,5 @@
-from typing import Tuple, Dict
+from __future__ import annotations
+from typing import Tuple, Dict, List
 import sys
 import pygame
 from pygame import gfxdraw
@@ -7,24 +8,17 @@ from Box2D import b2World, b2PolygonShape, b2FixtureDef, b2Body, b2RevoluteJoint
 
 from math import pi
 
-from utils import to_screen_pos
+from utils import Vec2, Color, to_screen_pos, div
 
-Vec2 = Tuple[float, float]
+BODY_SCALE = 21
 
-class BodyPart:
-	def __init__(self, vertices, pos: Vec2, angle: float, world: b2World, color: Tuple[int, int, int] = (255, 255, 255),
-				 dynamic: bool = True, categoryBits = None):
+class Object:
+	def __init__(self, vertices: List[Vec2], pos: Vec2, angle: float, world: b2World,
+				 color: Color = (255, 255, 255), dynamic: bool = True, categoryBits = 0x0001, maskBits = 0xFFFF):
 		self.color = color
 		
 		self.shape = b2PolygonShape()
 		self.shape.vertices = vertices
-		
-		maskBits = None
-		if categoryBits is None:
-			categoryBits = 0x0001 if dynamic else 0x0002
-			maskBits = 0xFFFF & ~0x0001 if dynamic else 0xFFFF
-		else:
-			maskBits = 0xFFFF
 		
 		self.fixture = b2FixtureDef(
 			shape=self.shape,
@@ -50,27 +44,35 @@ class BodyPart:
 		gfxdraw.aapolygon(screen, path, self.color)
 		pygame.draw.polygon(screen, color=(120, 120, 120), points=path, width=1)
 
-def CreateJoint(bodyA: BodyPart, bodyB: BodyPart, anchorA: Vec2, anchorB: Vec2, world: b2World, lowerAngle: float = None, upperAngle: float = None, refAngle: float = 0) -> b2RevoluteJoint:
+def BodyPart(vertices: List[Vec2], pos: Vec2, angle: float, world: b2World, color: Color) -> Object:
+	verts: List[Vec2] = list()
+	for v in vertices:
+		verts.append(div(v, BODY_SCALE))
+	return Object(verts, pos, angle, world, color, categoryBits=0x0002, maskBits=0xFFFF & ~0x0002)
+
+def CreateJoint(bodyA: Object, bodyB: Object, anchorA: Vec2, anchorB: Vec2, world: b2World,
+				lowerAngle: float = None, upperAngle: float = None, refAngle: float = 0) -> b2RevoluteJoint:
 	return world.CreateRevoluteJoint(
 		bodyA=bodyA.body,
 		bodyB=bodyB.body,
-		localAnchorA=anchorA,
-		localAnchorB=anchorB,
+		localAnchorA=div(anchorA, BODY_SCALE),
+		localAnchorB=div(anchorB, BODY_SCALE),
 		enableMotor=True,
-		maxMotorTorque=500,
+		maxMotorTorque=0.1,
 		# enableLimit=(lowerAngle is not None) and (upperAngle is not None),
 		# lowerAngle=lowerAngle,
 		# upperAngle=upperAngle,
-		referenceAngle=refAngle
+		# referenceAngle=refAngle
 	)
 
-def CreateWeld(bodyA: BodyPart, bodyB: BodyPart, anchorA: Vec2, anchorB: Vec2, world: b2World) -> b2WeldJoint:
+def CreateWeld(bodyA: Object, bodyB: Object, anchorA: Vec2, anchorB: Vec2, world: b2World) -> b2WeldJoint:
 	return world.CreateWeldJoint(
 		bodyA=bodyA.body,
 		bodyB=bodyB.body,
 		localAnchorA=anchorA,
 		localAnchorB=anchorB
 	)
+
 
 if __name__ == "__main__":
 	
@@ -80,12 +82,12 @@ if __name__ == "__main__":
 	height = 600
 	screen = pygame.display.set_mode((width, height))
 	
-	pos = (0, -10)
+	pos = (0, 1.5)
 	
 	PRIMARY_COLOR = (255, 255, 255)
 	SECONDARY_COLOR = (200, 200, 200)
-	parts: Dict[str, BodyPart] = {
-		"floor": BodyPart([(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)], (0, -30), 0, world, dynamic=False),
+	parts: Dict[str, Object] = {
+		"floor": Object([(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)], (0, 0), 0, world, dynamic=False),
 		
 		"biceps_b": BodyPart([(1.5,4.5), (-1.5,4.5), (-1.5,-4.5), (1.5,-4.5)], pos, 0, world, color=SECONDARY_COLOR),
 		"arm_b": BodyPart([(1,4), (-1,4), (-1,-4), (1,-4)], pos, 0, world, color=SECONDARY_COLOR),
@@ -98,12 +100,12 @@ if __name__ == "__main__":
 		
 		"thigh_f": BodyPart([(2,4.5), (-2,4.5), (-2,-4.5), (2,-4.5)], pos, 0, world, color=PRIMARY_COLOR),
 		"leg_f": BodyPart([(1,-1.5), (1,8.5), (-1,8.5), (-1,-1.5)], pos, 0, world, color=PRIMARY_COLOR),
-		# "foot_f": BodyPart([(4,1.5),(-1,1.5),(-1,-1.5),(4,-1.5)], (0, 0), 0, world),
+		# "foot_f": Object([(4,1.5),(-1,1.5),(-1,-1.5),(4,-1.5)], (0, 0), 0, world),
 		
 		"biceps_f": BodyPart([(1.5,4.5), (-1.5,4.5), (-1.5,-4.5), (1.5,-4.5)], pos, 0, world, color=PRIMARY_COLOR),
 		"arm_f": BodyPart([(1,4), (-1,4), (-1,-4), (1,-4)], pos, 0, world, color=PRIMARY_COLOR),
 		
-		"projectile": BodyPart([(-1,-1), (-1,1), (1,1), (1,-1)], (20, 5), 0, world, categoryBits=0x0004)
+		"projectile": Object([(-0.1,-0.1), (-0.1,0.1), (0.1,0.1), (0.1,-0.1)], (1, 1), 0, world)
 	}
 
 	joints: Dict[str, b2RevoluteJoint] = {
@@ -122,28 +124,24 @@ if __name__ == "__main__":
 		"b_leg_2": CreateJoint(parts['thigh_b'], parts['leg_b'], (0, -4.5), (0, 8.5), world),
 	}
 	
+	parts["projectile"].body.ApplyLinearImpulse((-0.15, 0.1), parts["projectile"].body.worldCenter, True)
+	
 	for j in joints.values():
 		j.motorEnabled=True
-	
-	proj = parts["projectile"]
-	proj.body.ApplyLinearImpulse((-70, 20), proj.body.worldCenter, True)
 	
 	# joints["f_arm_1"].motorSpeed = 5
 	# joints["b_arm_1"].motorSpeed = -5
 	
-	# parts: Dict[str, BodyPart] = {
-	# 	'floor': BodyPart([(-10, 0.1), (10, 0.1), (10, -0.1), (-10, -0.1)], (0, -10), 0, world, dynamic=False),
-	# 	'b1': BodyPart([(-1, -0.1), (1, -0.1), (1, 0.1), (-1, 0.1)], (0, 0), 0.8, world),
-	# 	'b2': BodyPart([(-1, -0.1), (1, -0.1), (1, 0.1), (-1, 0.1)], (0, 0), 0, world),
-	# 	# 'b3': BodyPart([(-1, -0.2), (1, -0.2), (1, 0.6), (-1, 0.1)], (0, 0), 0.4, world),
+	# parts: Dict[str, Object] = {
+	# 	'floor': Object([(-10, 0.1), (10, 0.1), (10, -0.1), (-10, -0.1)], (0, -10), 0, world, dynamic=False),
+	# 	'b1': Object([(-1, -0.1), (1, -0.1), (1, 0.1), (-1, 0.1)], (0, 0), 0.8, world),
+	# 	'b2': Object([(-1, -0.1), (1, -0.1), (1, 0.1), (-1, 0.1)], (0, 0), 0, world),
+	# 	# 'b3': Object([(-1, -0.2), (1, -0.2), (1, 0.6), (-1, 0.1)], (0, 0), 0.4, world),
 	# }
 	#
 	# CreateJoint(parts['b1'], parts['b2'], (1, 0), (-1, 0), world, 0, 0, 0.5)
 	
 	fps = 60
-	world.Step(1 / fps, 6, 3)
-	# world.Step(1 / fps, 6, 3)
-	# world.Step(1 / fps, 6, 3)
 	clock = pygame.time.Clock()
 	while True:
 		for event in pygame.event.get():
@@ -156,7 +154,7 @@ if __name__ == "__main__":
 		world.Step(1 / fps, 6, 3)
 		
 		for b in parts.values():
-			b.draw(screen, (0, 0), 30)
+			b.draw(screen, (0, 2), 2)
 		
 		pygame.display.flip()
 		pygame.display.update()
