@@ -3,21 +3,26 @@ from typing import Dict, Tuple
 from object import Object
 from Box2D import b2World, b2RevoluteJoint, b2RevoluteJointDef, b2Vec2
 
-from utils import deg2rad
+from utils import Color, deg2rad
 
 
 BODY_SCALE = 21
 
-PRIMARY_COLOR = (255, 255, 255)
-SECONDARY_COLOR = (200, 200, 200)
-
 
 def parse_body(
-    path: str, pos: b2Vec2, angle: float, world: b2World
+    path: str, pos: b2Vec2, angle: float, world: b2World, color: Color
 ) -> Tuple[Dict[str, Object], Dict[str, b2RevoluteJoint]]:
     bodyDef: dict = json.load(open(path))
-    root = bodyDef["root"]
+    root_id = bodyDef["root"]
     body = bodyDef["body"]
+
+    col_mult = 0.7
+    second_color = (
+        color[0] * col_mult,
+        color[1] * col_mult,
+        color[2] * col_mult,
+        color[3],
+    )
 
     objs: Dict[str, Object] = dict()
     joints: Dict[str, b2RevoluteJoint] = dict()
@@ -25,7 +30,7 @@ def parse_body(
         obj = Object(
             vertices=[b2Vec2(v) / BODY_SCALE for v in part["vertices"]],
             world=world,
-            color=PRIMARY_COLOR if part["color"] == 0 else SECONDARY_COLOR,
+            color=color if part["color"] == 0 else second_color,
             categoryBits=0x0002,
             maskBits=0xFFFF & ~0x0002,
         )
@@ -46,7 +51,7 @@ def parse_body(
                 jointDef.localAnchorA = b2Vec2(data["anchorA"]) / BODY_SCALE
                 jointDef.localAnchorB = b2Vec2(data["anchorB"]) / BODY_SCALE
                 jointDef.enableMotor = True
-                jointDef.maxMotorTorque = 0.5
+                jointDef.maxMotorTorque = 50
 
                 if "angle" in data:
                     jointDef.enableLimit = True
@@ -61,7 +66,7 @@ def parse_body(
                     angle=angle,
                 )
 
-    init_part(root, pos, angle)
+    init_part(root_id, pos, angle)
 
     return objs, joints
 
@@ -79,7 +84,11 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((width, height))
 
     parts, joints = parse_body(
-        RESORUCES_PATH + "bodies/body1.json", b2Vec2(0, 2), 0, world
+        RESORUCES_PATH + "bodies/body1.json",
+        b2Vec2(0, 2),
+        0,
+        world,
+        (255, 255, 255, 255),
     )
 
     parts["_floor"] = Object(

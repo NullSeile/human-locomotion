@@ -1,10 +1,11 @@
 import math
 import pygame
 from typing import Tuple
+from colorsys import hsv_to_rgb
 
 RESORUCES_PATH = "./resources/"
 
-Color = Tuple[int, int, int]
+Color = Tuple[int, int, int, int]
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
 def map(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
@@ -30,3 +31,9 @@ def to_screen_pos(
 
 def deg2rad(deg: float) -> float:
     return deg * math.pi / 180
+
+
+def hsv2rgb(h: float, s: float, v: float, a: float = 1):
+    hsv = hsv_to_rgb(h, s, v)
+
+    return (hsv[0] * 255, hsv[1] * 255, hsv[2] * 255, a * 255)
