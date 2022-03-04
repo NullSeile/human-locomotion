@@ -1,8 +1,9 @@
+import math
 from utils import RESORUCES_PATH
 import pygame
 from pygame.locals import QUIT
 import sys
-from Box2D import b2World
+from Box2D import b2World, b2Vec2
 import random
 
 from object import Object
@@ -17,7 +18,9 @@ if __name__ == "__main__":
     height = 600
     screen = pygame.display.set_mode((width, height))
 
-    parts, joints = parse_body(RESORUCES_PATH + "bodies/body1.json", (0, 2), 0, world)
+    parts, joints = parse_body(
+        RESORUCES_PATH + "bodies/body1.json", b2Vec2(0, 2), 0, world  # (0, 1.31)
+    )
 
     parts["_floor"] = Object(
         [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
@@ -27,7 +30,7 @@ if __name__ == "__main__":
         dynamic=False,
     )
 
-    fps = 30
+    fps = 60
     clock = pygame.time.Clock()
     while True:
         for event in pygame.event.get():
@@ -39,9 +42,6 @@ if __name__ == "__main__":
 
         for j in joints.values():
             j.motorSpeed = random.uniform(-1, 1)
-
-        joints["torso-biceps_f"].motorSpeed = 1
-        joints["torso-biceps_b"].motorSpeed = -1
 
         world.Step(1 / fps, 6, 3)
 

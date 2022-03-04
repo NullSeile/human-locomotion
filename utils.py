@@ -1,9 +1,9 @@
+import math
 import pygame
 from typing import Tuple
 
 RESORUCES_PATH = "./resources/"
 
-Vec2 = Tuple[float, float]
 Color = Tuple[int, int, int]
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
@@ -28,13 +28,5 @@ def to_screen_pos(
     return x, y
 
 
-def div(v: Vec2, s: float) -> Vec2:
-    return v[0] / s, v[1] / s
-
-
-def add(v1: Vec2, v2: Vec2) -> Vec2:
-    return v1[0] + v2[0], v1[1] + v2[1]
-
-
-def sub(v1: Vec2, v2: Vec2) -> Vec2:
-    return v1[0] - v2[0], v1[1] - v2[1]
+def deg2rad(deg: float) -> float:
+    return deg * math.pi / 180

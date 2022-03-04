@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List
-import sys
 import pygame
 from pygame import gfxdraw
 from Box2D import (
@@ -8,19 +7,20 @@ from Box2D import (
     b2PolygonShape,
     b2FixtureDef,
     b2Body,
+    b2Vec2,
     b2_dynamicBody,
     b2_staticBody,
 )
 
-from utils import Vec2, Color, to_screen_pos
+from utils import Color, to_screen_pos
 
 
 class Object:
     def __init__(
         self,
-        vertices: List[Vec2],
+        vertices: List[b2Vec2],
         world: b2World,
-        pos: Vec2 = (0, 0),
+        pos: b2Vec2 = (0, 0),
         angle: float = 0,
         color: Color = (255, 255, 255),
         dynamic: bool = True,
@@ -46,7 +46,7 @@ class Object:
             angle=angle,
         )
 
-    def draw(self, screen: pygame.Surface, center: Vec2, radius: float):
+    def draw(self, screen: pygame.Surface, center: b2Vec2, radius: float):
         trans = self.body.transform
 
         path = [
