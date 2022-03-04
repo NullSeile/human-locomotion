@@ -8,7 +8,7 @@
                 "arm_b": {
                     "anchorA": [0, -4.5],
                     "anchorB": [0, 4],
-                    "angle": { "min": 0, "max": 360 }
+                    "angle": {"min": 0, "max": 150}
                 }
             }
         },
@@ -22,7 +22,8 @@
             "children": {
                 "leg_b": {
                     "anchorA": [0, -4.5],
-                    "anchorB": [0, 8.5]
+                    "anchorB": [0, 8.5],
+                    "angle": {"min": -120, "max": 0}
                 }
             }
         },
@@ -40,23 +41,28 @@
             "children": {
                 "head": {
                     "anchorA": [0, 6],
-                    "anchorB": [0, -2.5]
+                    "anchorB": [0, -2.5],
+                    "angle": {"min": -80, "max": 30}
                 },
                 "biceps_f": {
                     "anchorA": [0, 5],
-                    "anchorB": [0, 4.5]
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -70, "max": 180}
                 },
                 "biceps_b": {
                     "anchorA": [0, 5],
-                    "anchorB": [0, 4.5]
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -70, "max": 180}
                 },
                 "thigh_f": {
                     "anchorA": [0, -6],
-                    "anchorB": [0, 4.5]
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -45, "max": 90}
                 },
                 "thigh_b": {
                     "anchorA": [0, -6],
-                    "anchorB": [0, 4.5]
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -45, "max": 90}
                 }
             }
         },
@@ -66,7 +72,8 @@
             "children": {
                 "leg_f": {
                     "anchorA": [0, -4.5],
-                    "anchorB": [0, 8.5]
+                    "anchorB": [0, 8.5],
+                    "angle": {"min": -120, "max": 0}
                 }
             }
         },
@@ -80,7 +87,8 @@
             "children": {
                 "arm_f": {
                     "anchorA": [0, -4.5],
-                    "anchorB": [0, 4]
+                    "anchorB": [0, 4],
+                    "angle": {"min": 0, "max": 150}
                 }
             }
         },
