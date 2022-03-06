@@ -51,7 +51,7 @@ def parse_body(
                 jointDef.localAnchorA = b2Vec2(data["anchorA"]) / BODY_SCALE
                 jointDef.localAnchorB = b2Vec2(data["anchorB"]) / BODY_SCALE
                 jointDef.enableMotor = True
-                jointDef.maxMotorTorque = 50
+                jointDef.maxMotorTorque = 500
 
                 if "angle" in data:
                     jointDef.enableLimit = True

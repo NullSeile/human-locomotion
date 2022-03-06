@@ -1,0 +1,51 @@
+{
+    "root": "head",
+    "body": {
+        "thigh_b": {
+            "vertices": [[1, 2.5], [-1, 2.5], [-1, -2.5], [1, -2.5]],
+            "color": 1,
+            "children": {
+                "leg_b": {
+                    "anchorA": [0, -2.5],
+                    "anchorB": [0, 3.5],
+                    "angle": {"min": -120, "max": 0}
+                }
+            }
+        },
+        "leg_b": {
+            "vertices": [[1, -1.5], [1, 3.5], [-1, 3.5], [-1, -1.5]],
+            "color": 1
+        },
+        "head": {
+            "vertices": [[3, 2], [-3, 2], [-3, -2], [3, -2]],
+            "color": 0,
+            "children": {
+                "thigh_f": {
+                    "anchorA": [0, -2],
+                    "anchorB": [0, 2.5],
+                    "angle": {"min": -45, "max": 90}
+                },
+                "thigh_b": {
+                    "anchorA": [0, -2],
+                    "anchorB": [0, 2.5],
+                    "angle": {"min": -45, "max": 90}
+                }
+            }
+        },
+        "thigh_f": {
+            "vertices": [[1, 2.5], [-1, 2.5], [-1, -2.5], [1, -2.5]],
+            "color": 0,
+            "children": {
+                "leg_f": {
+                    "anchorA": [0, -2.5],
+                    "anchorB": [0, 3.5],
+                    "angle": {"min": -120, "max": 0}
+                }
+            }
+        },
+        "leg_f": {
+            "vertices": [[1, -1.5], [1, 3.5], [-1, 3.5], [-1, -1.5]],
+            "color": 0
+        }
+    }
+}
