@@ -35,7 +35,7 @@ class Person:
 
     def update(self, t: int):
         if not self.dead:
-            if self._is_death() or t >= self.max_frames:
+            if self._is_dead() or t >= self.max_frames:
                 self.dead = True
                 self.score = self._calculate_score(t)
 
@@ -57,7 +57,7 @@ class Person:
         for p in self.parts.values():
             p.draw(screen, center, radius)
 
-    def _is_death(self) -> bool:
+    def _is_dead(self) -> bool:
         return self.parts["head"].body.position.y < 0.7
 
     def _calculate_score(self, t: float):
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     frames_per_action = fps // actions_per_sec
 
     n_threads = 1
-    population_size = 30
+    population_size = 31
 
     # n_threads = 2
     # population_size = 3
