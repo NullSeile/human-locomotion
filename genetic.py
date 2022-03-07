@@ -11,6 +11,7 @@ from object import Object
 from body_parser import parse_body
 
 
+
 class Person:
     def __init__(
         self,
@@ -57,15 +58,15 @@ class Person:
             p.draw(screen, center, radius)
 
     def _is_death(self) -> bool:
-        return self.parts["head"].body.position.y < 0.5
+        return self.parts["head"].body.position.y < 0.7
 
     def _calculate_score(self, t: float):
         avg_leg_x = np.average(
             [self.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
         )
-        score = max(0, avg_leg_x) + 0.1  # + 2 * t / self.max_frames
+        score = max(0, avg_leg_x) + 1  # + 2 * t / self.max_frames
 
-        return score**2
+        return score**4
 
 
 def Generation(
@@ -119,7 +120,7 @@ def Generation(
             pygame.display.flip()
             pygame.display.update()
 
-            clock.tick(fps)
+            # clock.tick(fps)
 
         t += 1
 
@@ -151,8 +152,8 @@ if __name__ == "__main__":
     fps = 30
     frames_per_action = fps // actions_per_sec
 
-    n_threads = 10
-    population_size = 70
+    n_threads = 1
+    population_size = 30
 
     # n_threads = 2
     # population_size = 3
@@ -163,25 +164,35 @@ if __name__ == "__main__":
     ]
 
     generation = 0
-    # for generation in range(1000):
+    # tracker = SummaryTracker()
+
     while True:
+    # for generation in tqdm(range(50)):
 
         print(f"Generation {generation}")
 
         threads: List[Thread] = list()
         scores_list = [[None] * population_size] * n_threads
         for n in range(n_threads):
-            threads.append(
-                Thread(
-                    target=Generation,
-                    args=(
-                        population_size,
-                        actions_list[n * population_size : (n + 1) * population_size],
-                        scores_list[n],
-                    ),
-                )
+
+            Generation(
+                population_size,
+                actions_list[n * population_size : (n + 1) * population_size],
+                scores_list[n],
+                screen,
             )
-            threads[-1].start()
+
+            # threads.append(
+            #     Thread(
+            #         target=Generation,
+            #         args=(
+            #             population_size,
+            #             actions_list[n * population_size : (n + 1) * population_size],
+            #             scores_list[n],
+            #         ),
+            #     )
+            # )
+            # threads[-1].start()
 
         for thread in threads:
             thread.join()
@@ -190,18 +201,18 @@ if __name__ == "__main__":
         for n, s in enumerate(scores_list):
             scores += s
 
-        distr = scores / sum(scores)
+        distr = np.array(scores) / sum(scores)
 
         print(f"{len(scores)}: avg={np.mean(scores):.4f}, max={max(scores):.4f}")
 
-        if generation % 5 == 0:
-            test_sample = 5
-            best_index = np.argpartition(scores, -test_sample)[-test_sample:]
-            print(best_index, [scores[i] for i in best_index])
+        # if generation % 5 == 0:
+        #     test_sample = 5
+        #     best_index = np.argpartition(scores, -test_sample)[-test_sample:]
+        #     print(best_index, [scores[i] for i in best_index])
 
-            Generation(
-                test_sample, [actions_list[i] for i in best_index], screen=screen
-            )
+        #     Generation(
+        #         test_sample, [actions_list[i] for i in best_index], screen=screen
+        #     )
 
         new_actions_list = list()
 
@@ -221,6 +232,12 @@ if __name__ == "__main__":
 
             new_actions_list.append(np.array(actions))
 
+        del actions_list
         actions_list = new_actions_list
 
         generation += 1
+
+        # if generation > 2:
+        #     exit()
+
+    # tracker.print_diff()
