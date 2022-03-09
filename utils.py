@@ -2,6 +2,7 @@ import math
 import pygame
 from typing import Tuple
 from colorsys import hsv_to_rgb
+from Box2D import b2Vec2
 
 RESORUCES_PATH = "./resources/"
 
@@ -37,3 +38,9 @@ def hsv2rgb(h: float, s: float, v: float, a: float = 1):
     hsv = hsv_to_rgb(h, s, v)
 
     return (hsv[0] * 255, hsv[1] * 255, hsv[2] * 255, a * 255)
+
+
+def rotate(v: b2Vec2, a: float) -> b2Vec2:
+    return b2Vec2(
+        v.x * math.cos(a) - v.y * math.sin(a), v.x * math.sin(a) + v.y * math.cos(a)
+    )

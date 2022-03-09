@@ -1,41 +1,49 @@
-from typing import List
+from typing import List, Dict
 import pygame
 from pygame.locals import QUIT
 import sys
 from Box2D import b2World, b2Vec2
 import numpy as np
 from threading import Thread
+import pandas as pd
 
 from utils import RESORUCES_PATH, Color, hsv2rgb
 from object import Object
-from body_parser import parse_body
+from body_parser import get_joints_def, parse_body, get_random_body_angles
 
+
+class PersonData:
+    def __init__(self, angles: Dict[str, float], loop: pd.DataFrame):
+        self.angles = angles
+        self.loop = loop
 
 
 class Person:
     def __init__(
         self,
+        path: str,
+        pos: b2Vec2,
         world: b2World,
-        actions: np.ndarray,
+        person_data: PersonData,
         frames_per_action: int,
+        n_loops: int,
         color: Color = (255, 255, 255, 255),
     ):
         self.world = world
-        # RESORUCES_PATH + "bodies/body1.json", b2Vec2(0, 1.31), 0, world, color
-        # RESORUCES_PATH + "bodies/body_simple.json", b2Vec2(0, 0.69), 0, world, color
         self.parts, self.joints = parse_body(
-            RESORUCES_PATH + "bodies/body1.json", b2Vec2(0, 1.31), 0, world, color
+            path, pos, 0, world, color, person_data.angles
         )
 
-        self.actions = actions
+        self.loop = person_data.loop
         self.frames_per_action = frames_per_action
-        self.max_frames = len(actions) * frames_per_action
+        self.frames_per_loop = len(self.loop) * frames_per_action
+        self.n_loops = n_loops
         self.dead = False
         self.score = 0
 
     def update(self, t: int):
         if not self.dead:
-            if self._is_dead() or t >= self.max_frames:
+            if self._is_dead() or t >= self.frames_per_loop * self.n_loops:
                 self.dead = True
                 self.score = self._calculate_score(t)
 
@@ -50,8 +58,9 @@ class Person:
                 return
 
             if t % self.frames_per_action == 0:
-                for i, joint in enumerate(self.joints.values()):
-                    joint.motorSpeed = self.actions[t // frames_per_action, i]
+                for joint_id, joint in self.joints.items():
+                    loop_index = (t // frames_per_action) % len(self.loop)
+                    joint.motorSpeed = self.loop[loop_index][joint_id]
 
     def draw(self, screen: pygame.Surface, center: b2Vec2, radius: float):
         for p in self.parts.values():
@@ -70,7 +79,14 @@ class Person:
 
 
 def Generation(
-    population_size: int, actions_list: List[np.ndarray], results=None, screen=None
+    body_path: str,
+    pos: b2Vec2,
+    population_size: int,
+    actions_list: List[pd.DataFrame],
+    frames_per_action: int,
+    n_loops: int,
+    results=None,
+    screen=None,
 ):
 
     world = b2World(gravity=(0, -9.8))
@@ -79,9 +95,12 @@ def Generation(
     for i in range(population_size):
         people.append(
             Person(
+                body_path,
+                pos,
                 world,
                 actions_list[i],
                 frames_per_action,
+                n_loops,
                 hsv2rgb(i / population_size, 0.5, 0.8, 0.5),
             )
         )
@@ -143,11 +162,12 @@ if __name__ == "__main__":
     height = 600
     screen = pygame.display.set_mode((width, height))
 
-    # n_joints = 4
-    n_joints = 9
+    body_path = RESORUCES_PATH + "bodies/body1.json"
+    start_pos = b2Vec2(0, 1.31)
+
     actions_per_sec = 5
-    max_time = 10
-    actions_shape = (max_time * actions_per_sec, n_joints)
+    loop_time = 3
+    n_loops = 4
 
     fps = 30
     frames_per_action = fps // actions_per_sec
@@ -155,29 +175,37 @@ if __name__ == "__main__":
     n_threads = 1
     population_size = 31
 
-    # n_threads = 2
-    # population_size = 3
-
-    actions_list = [
-        np.random.rand(max_time * actions_per_sec, n_joints) * 2 - 1
-        for _ in range(population_size * n_threads)
-    ]
+    joints = get_joints_def(body_path)
+    actions_list: List[PersonData] = list()
+    for _ in range(population_size * n_threads):
+        actions_list.append(
+            PersonData(
+                # For now all angles are 0
+                angles=get_random_body_angles(body_path, 0.0),
+                loop=pd.DataFrame(
+                    data=np.random.rand(len(joints), loop_time * actions_per_sec) * 2
+                    - 1,
+                    index=joints.keys(),
+                ),
+            )
+        )
 
     generation = 0
-    # tracker = SummaryTracker()
-
     while True:
-    # for generation in tqdm(range(50)):
 
         print(f"Generation {generation}")
 
-        threads: List[Thread] = list()
+        # threads: List[Thread] = list()
         scores_list = [[None] * population_size] * n_threads
         for n in range(n_threads):
 
             Generation(
+                body_path,
+                start_pos,
                 population_size,
                 actions_list[n * population_size : (n + 1) * population_size],
+                frames_per_action,
+                n_loops,
                 scores_list[n],
                 screen,
             )
@@ -194,8 +222,8 @@ if __name__ == "__main__":
             # )
             # threads[-1].start()
 
-        for thread in threads:
-            thread.join()
+        # for thread in threads:
+        #     thread.join()
 
         scores = list()
         for n, s in enumerate(scores_list):
@@ -217,27 +245,25 @@ if __name__ == "__main__":
         new_actions_list = list()
 
         for p in range(population_size * n_threads):
-            actions = list()
-            for t in range(actions_shape[0]):
+            loop = pd.DataFrame(index=joints.keys())
+            for t in range(loop_time * actions_per_sec):
+                person_index = np.random.choice(
+                    range(population_size * n_threads), p=distr
+                )
                 if np.random.rand() > 0.01:
-                    actions.append(
-                        actions_list[
-                            np.random.choice(
-                                range(population_size * n_threads), p=distr
-                            )
-                        ][t]
-                    )
+                    loop.loc[:, t] = actions_list[person_index].loop.loc[:, t]
                 else:
-                    actions.append(np.random.rand(n_joints) * 2 - 1)
+                    loop.loc[:, t] = np.random.rand(len(joints)) * 2 - 1
 
-            new_actions_list.append(np.array(actions))
+            angles: Dict[str, float] = dict()
+            for joint_id in joints:
+                person_index = np.random.choice(
+                    range(population_size * n_threads), p=distr
+                )
+                angles[joint_id] = actions_list[person_index].angles[joint_id]
 
-        del actions_list
+            new_actions_list.append(PersonData(angles, loop))
+
         actions_list = new_actions_list
 
         generation += 1
-
-        # if generation > 2:
-        #     exit()
-
-    # tracker.print_diff()
