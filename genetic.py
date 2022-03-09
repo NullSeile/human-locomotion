@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 import pygame
 from pygame.locals import QUIT  # type: ignore
 
@@ -63,7 +63,7 @@ class Person:
                     loop_index = (t // frames_per_action) % len(self.loop)
                     joint.motorSpeed = self.loop[loop_index][joint_id]
 
-    def draw(self, screen: pygame.Surface, center: b2Vec2, radius: float):
+    def draw(self, screen: pygame.surface.Surface, center: b2Vec2, radius: float):
         for p in self.parts.values():
             p.draw(screen, center, radius)
 
@@ -86,8 +86,8 @@ def Generation(
     actions_list: List[pd.DataFrame],
     frames_per_action: int,
     n_loops: int,
-    results=None,
-    screen=None,
+    results: Optional[List[float]] = None,
+    screen: Optional[pygame.surface.Surface] = None,
 ):
 
     world = b2World(gravity=(0, -9.8))

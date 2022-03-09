@@ -24,8 +24,8 @@ class Object:
         angle: float = 0,
         color: Color = (255, 255, 255, 255),
         dynamic: bool = True,
-        categoryBits=0x0001,
-        maskBits=0xFFFF,
+        categoryBits: int = 0x0001,
+        maskBits: int = 0xFFFF,
     ):
         self.color = color
 
