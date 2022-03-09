@@ -7,6 +7,7 @@ from Box2D import b2Vec2
 RESORUCES_PATH = "./resources/"
 
 Color = Tuple[int, int, int, int]
+Vec2 = Union[b2Vec2, Tuple[float, float]]
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
 def map(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
@@ -14,11 +15,11 @@ def map(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
 
 
 def to_screen_pos(
-    pos: Tuple[float, float],
-    center: Tuple[float, float],
+    pos: Vec2,
+    center: Vec2,
     radius: float,
     screen: pygame.surface.Surface,
-) -> b2Vec2:
+) -> Vec2:
     width = screen.get_width()
     height = screen.get_height()
 
@@ -40,7 +41,10 @@ def hsv2rgb(h: float, s: float, v: float, a: float = 1):
     return (hsv[0] * 255, hsv[1] * 255, hsv[2] * 255, a * 255)
 
 
-def rotate(v: b2Vec2, a: float) -> b2Vec2:
+def rotate(v: Vec2, a: float) -> Vec2:
+    if isinstance(v, tuple):
+        v = b2Vec2(v)
+
     return b2Vec2(
         v.x * math.cos(a) - v.y * math.sin(a), v.x * math.sin(a) + v.y * math.cos(a)
     )

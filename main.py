@@ -6,7 +6,7 @@ import sys
 from Box2D import b2World, b2Vec2
 import random
 
-from object import Object
+from object import WorldObject
 from body_parser import parse_body
 
 if __name__ == "__main__":
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         (255, 255, 255, 255),  # (0, 1.31)
     )
 
-    parts["_floor"] = Object(
+    parts["_floor"] = WorldObject(
         [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
         world,
         (0, 0),

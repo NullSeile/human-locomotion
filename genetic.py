@@ -3,88 +3,32 @@ import pygame
 from pygame.locals import QUIT  # type: ignore
 
 import sys
-from Box2D import b2World, b2Vec2
+from Box2D import b2World
 import numpy as np
-from threading import Thread
 import pandas as pd
 
-from utils import RESORUCES_PATH, Color, hsv2rgb
-from object import Object
-from body_parser import get_joints_def, parse_body, get_random_body_angles
+from utils import RESORUCES_PATH, hsv2rgb, Vec2
+from object import WorldObject
+from body_parser import get_joints_def, get_random_body_angles
+from person import MotionData, Person, BodyPartsDef
+
+# _i_hsv = 0
+# _pop_size = 100
 
 
-class PersonData:
-    def __init__(self, angles: Dict[str, float], loop: pd.DataFrame):
-        self.angles = angles
-        self.loop = loop
-
-
-class Person:
-    def __init__(
-        self,
-        path: str,
-        pos: b2Vec2,
-        world: b2World,
-        person_data: PersonData,
-        frames_per_action: int,
-        n_loops: int,
-        color: Color = (255, 255, 255, 255),
-    ):
-        self.world = world
-        self.parts, self.joints = parse_body(
-            path, pos, 0, world, color, person_data.angles
-        )
-
-        self.loop = person_data.loop
-        self.frames_per_action = frames_per_action
-        self.frames_per_loop = len(self.loop) * frames_per_action
-        self.n_loops = n_loops
-        self.dead = False
-        self.score = 0
-
-    def update(self, t: int):
-        if not self.dead:
-            if self._is_dead() or t >= self.frames_per_loop * self.n_loops:
-                self.dead = True
-                self.score = self._calculate_score(t)
-
-                for j in self.joints.values():
-                    self.world.DestroyJoint(j)
-                self.joints.clear()
-
-                for p in self.parts.values():
-                    self.world.DestroyBody(p.body)
-                self.parts.clear()
-
-                return
-
-            if t % self.frames_per_action == 0:
-                for joint_id, joint in self.joints.items():
-                    loop_index = (t // frames_per_action) % len(self.loop)
-                    joint.motorSpeed = self.loop[loop_index][joint_id]
-
-    def draw(self, screen: pygame.surface.Surface, center: b2Vec2, radius: float):
-        for p in self.parts.values():
-            p.draw(screen, center, radius)
-
-    def _is_dead(self) -> bool:
-        return self.parts["head"].body.position.y < 0.7
-
-    def _calculate_score(self, t: float):
-        avg_leg_x = np.average(
-            [self.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
-        )
-        score = max(0, avg_leg_x) + 1  # + 2 * t / self.max_frames
-
-        return score**4
+# def get_hsv2rgb_person():
+#     global _i_hsv
+#     global _pop_size
+#     colour = hsv2rgb(_i_hsv / _pop_size, 0.5, 0.8, 0.5)
+#     _i_hsv = (_i_hsv + 1) % _pop_size
+#     return colour
 
 
 def Generation(
     body_path: str,
-    pos: b2Vec2,
+    pos: Vec2,
     population_size: int,
-    actions_list: List[pd.DataFrame],
-    frames_per_action: int,
+    actions_list: List[MotionData],
     n_loops: int,
     results: Optional[List[float]] = None,
     screen: Optional[pygame.surface.Surface] = None,
@@ -96,17 +40,15 @@ def Generation(
     for i in range(population_size):
         people.append(
             Person(
-                body_path,
-                pos,
-                world,
+                BodyPartsDef(
+                    body_path, pos, world, hsv2rgb(i / population_size, 0.5, 0.8, 0.5)
+                ),
                 actions_list[i],
-                frames_per_action,
                 n_loops,
-                hsv2rgb(i / population_size, 0.5, 0.8, 0.5),
             )
         )
 
-    floor = Object(
+    floor = WorldObject(
         [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
         world,
         (0, 0),
@@ -164,7 +106,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((width, height))
 
     body_path = RESORUCES_PATH + "bodies/body1.json"
-    start_pos = b2Vec2(0, 1.31)
+    start_pos = (0, 1.31)
 
     actions_per_sec = 5
     loop_time = 3
@@ -177,10 +119,10 @@ if __name__ == "__main__":
     population_size = 31
 
     joints = get_joints_def(body_path)
-    actions_list: List[PersonData] = list()
+    actions_list: List[MotionData] = list()
     for _ in range(population_size * n_threads):
         actions_list.append(
-            PersonData(
+            MotionData(
                 # For now all angles are 0
                 angles=get_random_body_angles(body_path, 0.0),
                 loop=pd.DataFrame(
@@ -188,6 +130,7 @@ if __name__ == "__main__":
                     - 1,
                     index=joints.keys(),
                 ),
+                frames_per_action=frames_per_action,
             )
         )
 
@@ -205,7 +148,6 @@ if __name__ == "__main__":
                 start_pos,
                 population_size,
                 actions_list[n * population_size : (n + 1) * population_size],
-                frames_per_action,
                 n_loops,
                 scores_list[n],
                 screen,
@@ -263,7 +205,7 @@ if __name__ == "__main__":
                 )
                 angles[joint_id] = actions_list[person_index].angles[joint_id]
 
-            new_actions_list.append(PersonData(angles, loop))
+            new_actions_list.append(MotionData(angles, loop, frames_per_action))
 
         actions_list = new_actions_list
 
