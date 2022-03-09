@@ -1,19 +1,13 @@
-# from traceback import FrameSummary
-from typing import List, Dict, Optional, Union, Tuple
+from typing import Dict
 import pygame
 
-# from pygame.locals import QUIT  # type: ignore
-
-# import sys
 from Box2D import b2World, b2Vec2
 import numpy as np
 
-# from threading import Thread
 import pandas as pd
 
-from utils import RESORUCES_PATH, Color, hsv2rgb, Vec2
-from object import WorldObject
-from body_parser import get_joints_def, parse_body, get_random_body_angles
+from utils import Color, Vec2
+from body_parser import parse_body
 
 
 class MotionData:
@@ -105,12 +99,11 @@ class BodyParts:
 
         for joint in self.joints.values():
             self._world.DestroyJoint(joint)
+        self.joints.clear()
 
         for part in self.parts.values():
             self._world.DestroyBody(part.body)
-        # self.parts.clear()
-
-        # self.joints.clear()
+        self.parts.clear()
 
     def draw(self, screen: pygame.surface.Surface, center: Vec2, radius: float):
         for p in self.parts.values():
@@ -136,23 +129,13 @@ class Person:
         self.motion_data = motion_data
 
         # Create Body Parts
-        self.parts, self.joints = parse_body(
+        self.body_parts = BodyParts(
             body_parts_def.body_filepath,
             body_parts_def.pos,
-            0,
             body_parts_def.world,
-            body_parts_def.color,
             self.motion_data.angles,
+            body_parts_def.color,
         )
-        self.world = body_parts_def.world
-        # self.body_parts = self._generate_body_parts(body_parts_def)
-        # self.body_parts = BodyParts(
-        #     body_parts_def.body_filepath,
-        #     body_parts_def.pos,
-        #     body_parts_def.world,
-        #     self.motion_data.angles,
-        #     body_parts_def.color,
-        # )
 
         #
         self.frames_per_action = self.motion_data.frames_per_action
@@ -162,15 +145,6 @@ class Person:
         self.n_loops = n_loops
         self.dead = False
         self.score = 0
-
-    def _generate_body_parts(self, body_parts_def: BodyPartsDef) -> BodyParts:
-        return BodyParts(
-            body_parts_def.body_filepath,
-            body_parts_def.pos,
-            body_parts_def.world,
-            self.motion_data.angles,
-            body_parts_def.color,
-        )
 
     def update(self, t: int) -> bool:
         """
@@ -195,17 +169,11 @@ class Person:
                 self.dead = True
                 self.score = self._calculate_score(t)
 
-                for j in self.joints.values():
-                    self.world.DestroyJoint(j)
-
-                for b in self.parts.values():
-                    self.world.DestroyBody(b.body)
-
-                # self.body_parts.destroy()
+                self.body_parts.destroy()
                 return True
 
             if t % self.frames_per_action == 0:
-                for joint_id, joint in self.joints.items():
+                for joint_id, joint in self.body_parts.joints.items():
                     loop_index = (t // self.motion_data.frames_per_action) % len(
                         self.motion_data.loop
                     )
@@ -214,17 +182,15 @@ class Person:
         return False
 
     def draw(self, screen: pygame.surface.Surface, center: Vec2, radius: float):
-        for p in self.parts.values():
-            p.draw(screen, center, radius)
-        # if not self.dead:
-        #     self.body_parts.draw(screen, center, radius)
+        if not self.dead:
+            self.body_parts.draw(screen, center, radius)
 
     def _is_dead(self) -> bool:
-        return self.parts["head"].body.position.y < 0.7
+        return self.body_parts.parts["head"].body.position.y < 0.7
 
     def _calculate_score(self, t: float):
         avg_leg_x = np.average(
-            [self.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
+            [self.body_parts.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
         )
         score = max(0, avg_leg_x) + 1  # + 2 * t / self.max_frames
 

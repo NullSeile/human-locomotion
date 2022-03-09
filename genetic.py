@@ -1,17 +1,15 @@
-from traceback import FrameSummary
-from typing import List, Dict, Optional, Union, Tuple
+from typing import List, Dict, Optional
 import pygame
 from pygame.locals import QUIT  # type: ignore
 
 import sys
-from Box2D import b2World, b2Vec2
+from Box2D import b2World
 import numpy as np
-from threading import Thread
 import pandas as pd
 
-from utils import RESORUCES_PATH, Color, hsv2rgb, Vec2
+from utils import RESORUCES_PATH, hsv2rgb, Vec2
 from object import WorldObject
-from body_parser import get_joints_def, parse_body, get_random_body_angles
+from body_parser import get_joints_def, get_random_body_angles
 from person import MotionData, Person, BodyPartsDef
 
 # _i_hsv = 0
@@ -40,7 +38,6 @@ def Generation(
 
     people: List[Person] = list()
     for i in range(population_size):
-        # person = create_person()
         people.append(
             Person(
                 BodyPartsDef(
@@ -136,8 +133,6 @@ if __name__ == "__main__":
                 frames_per_action=frames_per_action,
             )
         )
-
-    print(actions_list[0].loop)
 
     generation = 0
     while True:

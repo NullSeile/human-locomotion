@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple, Optional
 from object import WorldObject
 from Box2D import b2World, b2RevoluteJoint, b2RevoluteJointDef, b2Vec2
 import numpy as np
