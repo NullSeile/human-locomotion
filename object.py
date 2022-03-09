@@ -15,7 +15,7 @@ from Box2D import (
 from utils import Color, to_screen_pos
 
 
-class Object:
+class WorldObject:
     def __init__(
         self,
         vertices: List[b2Vec2],

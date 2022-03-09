@@ -1,10 +1,10 @@
 import json
 from typing import Dict, Tuple, List, Optional
-from object import Object
+from object import WorldObject
 from Box2D import b2World, b2RevoluteJoint, b2RevoluteJointDef, b2Vec2
 import numpy as np
 
-from utils import Color, deg2rad, rotate
+from utils import Color, deg2rad, rotate, Vec2
 
 
 BODY_SCALE = 21
@@ -28,12 +28,12 @@ def get_joints_def(path: str) -> dict:
 
 def parse_body(
     path: str,
-    pos: b2Vec2,
+    pos: Vec2,
     angle: float,
     world: b2World,
     color: Color,
     angles: Optional[Dict[str, float]] = None,
-) -> Tuple[Dict[str, Object], Dict[str, b2RevoluteJoint]]:
+) -> Tuple[Dict[str, WorldObject], Dict[str, b2RevoluteJoint]]:
 
     bodyDef: dict = json.load(open(path))
     root_id = bodyDef["root"]
@@ -47,10 +47,10 @@ def parse_body(
         color[3],
     )
 
-    objs: Dict[str, Object] = dict()
+    objs: Dict[str, WorldObject] = dict()
     joints: Dict[str, b2RevoluteJoint] = dict()
     for key, part in body.items():
-        obj = Object(
+        obj = WorldObject(
             vertices=[b2Vec2(v) / BODY_SCALE for v in part["vertices"]],
             world=world,
             color=color if part["color"] == 0 else second_color,
@@ -60,7 +60,7 @@ def parse_body(
         objs[key] = obj
 
     # For recursively initializing the position of the body parts
-    def init_part(part_id: str, pos: b2Vec2, angle: float):
+    def init_part(part_id: str, pos: Vec2, angle: float):
         objs[part_id].body.position = pos
         objs[part_id].body.angle = deg2rad(angle)
 
@@ -94,7 +94,7 @@ def parse_body(
 
                 init_part(
                     part_id=child_id,
-                    pos=pos
+                    pos=b2Vec2(pos)
                     + rotate(jointDef.localAnchorA, angle)
                     - rotate(jointDef.localAnchorB, next_angle),
                     angle=next_angle,
@@ -139,14 +139,14 @@ if __name__ == "__main__":
     angles = get_random_body_angles(body_path)
     parts, joints = parse_body(
         body_path,
-        b2Vec2(0, 2),
+        (0, 2),
         0,
         world,
         (255, 255, 255, 255),
         angles,
     )
 
-    parts["_floor"] = Object(
+    parts["_floor"] = WorldObject(
         [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
         world,
         (0, 0),
