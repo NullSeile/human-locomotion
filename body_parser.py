@@ -41,9 +41,9 @@ def parse_body(
 
     col_mult = 0.7
     second_color = (
-        color[0] * col_mult,
-        color[1] * col_mult,
-        color[2] * col_mult,
+        int(color[0] * col_mult),
+        int(color[1] * col_mult),
+        int(color[2] * col_mult),
         color[3],
     )
 
@@ -124,7 +124,7 @@ def get_random_body_angles(path: str, scale: float = 1) -> Dict[str, float]:
 if __name__ == "__main__":
     from utils import RESORUCES_PATH
     import pygame
-    from pygame.locals import QUIT
+    from pygame.locals import QUIT  # type: ignore
     import sys
     import numpy as np
 

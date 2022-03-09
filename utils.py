@@ -1,6 +1,6 @@
 import math
 import pygame
-from typing import Tuple
+from typing import Tuple, Union
 from colorsys import hsv_to_rgb
 from Box2D import b2Vec2
 
@@ -17,8 +17,8 @@ def to_screen_pos(
     pos: Tuple[float, float],
     center: Tuple[float, float],
     radius: float,
-    screen: pygame.Surface,
-) -> Tuple[int, int]:
+    screen: pygame.surface.Surface,
+) -> b2Vec2:
     width = screen.get_width()
     height = screen.get_height()
 
@@ -27,7 +27,7 @@ def to_screen_pos(
     x = map(pos[0], center[0] - radius * aspect, center[0] + radius * aspect, 0, width)
     y = map(pos[1], center[1] - radius, center[1] + radius, height, 0)
 
-    return x, y
+    return b2Vec2(x, y)
 
 
 def deg2rad(deg: float) -> float:

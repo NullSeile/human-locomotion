@@ -1,7 +1,7 @@
 import math
 from utils import RESORUCES_PATH
 import pygame
-from pygame.locals import QUIT
+from pygame.locals import QUIT  # type: ignore
 import sys
 from Box2D import b2World, b2Vec2
 import random
@@ -19,7 +19,11 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((width, height))
 
     parts, joints = parse_body(
-        RESORUCES_PATH + "bodies/body1.json", b2Vec2(0, 2), 0, world  # (0, 1.31)
+        RESORUCES_PATH + "bodies/body1.json",
+        b2Vec2(0, 2),
+        0,
+        world,
+        (255, 255, 255, 255),  # (0, 1.31)
     )
 
     parts["_floor"] = Object(

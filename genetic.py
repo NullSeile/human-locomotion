@@ -1,6 +1,7 @@
 from typing import List, Dict
 import pygame
-from pygame.locals import QUIT
+from pygame.locals import QUIT  # type: ignore
+
 import sys
 from Box2D import b2World, b2Vec2
 import numpy as np
@@ -196,7 +197,7 @@ if __name__ == "__main__":
         print(f"Generation {generation}")
 
         # threads: List[Thread] = list()
-        scores_list = [[None] * population_size] * n_threads
+        scores_list: List[List[float]] = [[0] * population_size] * n_threads
         for n in range(n_threads):
 
             Generation(
@@ -225,7 +226,7 @@ if __name__ == "__main__":
         # for thread in threads:
         #     thread.join()
 
-        scores = list()
+        scores: List[float] = list()
         for n, s in enumerate(scores_list):
             scores += s
 

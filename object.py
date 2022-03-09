@@ -22,7 +22,7 @@ class Object:
         world: b2World,
         pos: b2Vec2 = (0, 0),
         angle: float = 0,
-        color: Color = (255, 255, 255),
+        color: Color = (255, 255, 255, 255),
         dynamic: bool = True,
         categoryBits=0x0001,
         maskBits=0xFFFF,
@@ -46,7 +46,7 @@ class Object:
             angle=angle,
         )
 
-    def draw(self, screen: pygame.Surface, center: b2Vec2, radius: float):
+    def draw(self, screen: pygame.surface.Surface, center: b2Vec2, radius: float):
         trans = self.body.transform
 
         path = [
