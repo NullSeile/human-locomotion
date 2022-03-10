@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Optional
 from Box2D import b2World
 import os
 import pygame
@@ -6,6 +6,8 @@ import pygame
 
 from person import PersonSimulation
 from world_object import WorldObject
+
+from draw import draw_world
 
 from utils import RESORUCES_PATH
 
@@ -15,9 +17,11 @@ _DEFAULT_BODY_PATH = os.path.join(RESORUCES_PATH, "bodies/body1.json")
 class Simulation:
     def __init__(
         self,
-        bodypath: str=_DEFAULT_BODY_PATH,
+        bodypath: str = _DEFAULT_BODY_PATH,
         population_size: int = 60,
-        syncronous_drawing: bool=False,
+        syncronous_drawing: bool = False,
+        screen_to_draw: Optional[pygame.surface.Surface] = None,
+        fps: Optional[int] = None,
     ):
         self.world: b2World = None
         self.floor: WorldObject = None
@@ -27,6 +31,10 @@ class Simulation:
         self.bodypath = bodypath
         self.scores = None
         self._syncronous_drawing = syncronous_drawing
+        if self._syncronous_drawing and screen_to_draw is None:
+            raise Exception("Screen must be given if syncronous drawing is used.")
+        self._screen = screen_to_draw
+        self._fps = fps
         self._create_world()
 
     def _create_world(self):
@@ -55,17 +63,17 @@ class Simulation:
             self.population.append(person)
 
     def _run_generation(self):
-        t = 0
-        clock = pygame.time.Clock()
+        # t = 0
+        # clock = pygame.time.Clock()
         while not any([p.dead for p in self.population]):
             for person in self.population:
-                person.update(t)
-            self.world.Step(1 / fps, 2, 1)
+                person.step()
             if self._syncronous_drawing:
-                draw_world(screen, people, floor)
-            t += 1
+                self.world.Step(1 / self._fps, 2, 1)
+                draw_world(self._screen, self.population, self.floor)
+            # t += 1
 
-        return [people[i].score for i in range(population_size)]
+        return [p.score for p in self.population]
 
     def has_converged(self, threshold: float = 0.01) -> bool:
         """
