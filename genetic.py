@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from utils import RESORUCES_PATH, hsv2rgb, Vec2
-from object import WorldObject
+from world_object import WorldObject
 from body_parser import get_joints_def, get_random_body_angles
 from person import MotionData, Person, BodyPartsDef
 import os
@@ -53,17 +53,17 @@ def perform_generation(
     # Create people
     people: List[Person] = list()
     for i in range(population_size):
-        world.create_person()
+        # world.create_person()
 
-        # body_parts = BodyPartsDef(
-        #     body_path, pos, world, hsv2rgb(i / population_size, 0.5, 0.8, 0.5)
-        # )
-        # person = Person(
-        #     body_parts,
-        #     actions_list[i],
-        #     n_loops,
-        # )
-        # people.append(person)
+        body_parts = BodyPartsDef(
+            body_path, pos, world, hsv2rgb(i / population_size, 0.5, 0.8, 0.5)
+        )
+        person = Person(
+            body_parts,
+            actions_list[i],
+            n_loops,
+        )
+        people.append(person)
 
     t = 0
     clock = pygame.time.Clock()

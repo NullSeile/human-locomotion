@@ -1,6 +1,6 @@
 import json
 from typing import Dict, Tuple, Optional
-from object import WorldObject
+from world_object import WorldObject
 from Box2D import b2World, b2RevoluteJoint, b2RevoluteJointDef, b2Vec2
 import numpy as np
 
@@ -29,7 +29,6 @@ def get_joints_def(path: str) -> dict:
 def parse_body(
     path: str,
     pos: Vec2,
-    angle: float,
     world: b2World,
     color: Color,
     angles: Optional[Dict[str, float]] = None,
@@ -100,7 +99,7 @@ def parse_body(
                     angle=next_angle,
                 )
 
-    init_part(root_id, pos, angle)
+    init_part(root_id, pos, 0)
 
     return objs, joints
 
