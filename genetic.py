@@ -1,3 +1,4 @@
+from functools import partial
 from typing import List
 import pygame
 from pygame.locals import QUIT
@@ -6,10 +7,9 @@ from Box2D import b2World, b2Vec2
 import numpy as np
 from threading import Thread
 
-from utils import RESORUCES_PATH, Color, hsv2rgb
+from utils import RESORUCES_PATH, Color, homo, hsv2rgb, deg2rad
 from object import Object
 from body_parser import parse_body
-
 
 
 class Person:
@@ -61,12 +61,34 @@ class Person:
         return self.parts["head"].body.position.y < 0.7
 
     def _calculate_score(self, t: float):
+
         avg_leg_x = np.average(
             [self.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
         )
-        score = max(0, avg_leg_x) + 1  # + 2 * t / self.max_frames
 
-        return score**4
+        step = abs(
+            self.parts["leg_f"].body.position.x - self.parts["leg_b"].body.position.x
+        )
+        long_step = 0
+        if step > 1:
+            long_step = (step - 1) * 50
+
+        floor_knee = [
+            self.parts[leg].body.transform * self.parts[leg].shape.vertices[1]
+            for leg in ["leg_f", "leg_b"]
+        ]
+        knee = 0
+        if any(floor_knee) < 0.01:
+            knee = 50
+
+        tors_ang = self.parts["torso"].body.angle
+        escoliosis = 0
+        if tors_ang > np.pi / 4:
+            escoliosis = (tors_ang - np.pi / 4) * 100
+
+        score = max(0, avg_leg_x - long_step - knee - escoliosis)
+
+        return score
 
 
 def Generation(
@@ -153,7 +175,7 @@ if __name__ == "__main__":
     frames_per_action = fps // actions_per_sec
 
     n_threads = 1
-    population_size = 31
+    population_size = 30
 
     # n_threads = 2
     # population_size = 3
@@ -167,7 +189,7 @@ if __name__ == "__main__":
     # tracker = SummaryTracker()
 
     while True:
-    # for generation in tqdm(range(50)):
+        # for generation in tqdm(range(50)):
 
         print(f"Generation {generation}")
 
@@ -201,6 +223,10 @@ if __name__ == "__main__":
         for n, s in enumerate(scores_list):
             scores += s
 
+        min_val = min(scores)
+        max_val = max(scores)
+        scores = list(map(partial(homo, x0=min_val, x1=max_val, y0=0, y1=1), scores))
+        print(scores)
         distr = np.array(scores) / sum(scores)
 
         print(f"{len(scores)}: avg={np.mean(scores):.4f}, max={max(scores):.4f}")
