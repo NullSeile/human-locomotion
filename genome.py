@@ -146,7 +146,7 @@ class GenomeFactory:
         )
         randmat = np.reshape(randarr, (len(self._joints), self.number_actions_loop))
         child.actions_loop.iloc[randmat] = np.random.random(
-            size=np.count_nonzero(randmat.shape)
+            size=np.count_nonzero(randmat)
         )
 
         return child

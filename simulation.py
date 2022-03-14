@@ -86,7 +86,7 @@ class Simulation:
 
     def _run_generation(self):
         t = 0
-        while not any([p.dead for p in self.population]):
+        while not all([p.dead for p in self.population]):
             self.world.Step(1 / self._fps, 2, 1)
             if self._syncronous_drawing:
                 draw_world(self._screen, self.population, self.floor)
@@ -110,7 +110,8 @@ class Simulation:
         new_population: List[PersonSimulation] = []
         for i in range(self.population_size):
 
-            genome = self.genome_factory.old_get_genome_from_breed(genomes, distr)
+            # genome = self.genome_factory.old_get_genome_from_breed(genomes, distr)
+            genome = self.genome_factory.get_genome_from_breed(genomes, distr)
             person = PersonSimulation(
                 self.genome_factory.body_path,
                 genome,

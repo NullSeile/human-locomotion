@@ -59,7 +59,7 @@ class PersonSimulation:
         self.score = 0
 
         self.idle_score = 0
-        self.idle_margin = 0.01
+        self.idle_margin = 0.1
         self.idle_max_score = 1
         self.idle_max_pos_x = self.genome.pos.x
 
@@ -70,8 +70,8 @@ class PersonSimulation:
         """
         Update the person's metrics.
         """
-        actual_pos_x = average_distance_person(self)
-        if self._steps_count > 15:
+        if self._steps_count > 30:
+            actual_pos_x = average_distance_person(self)
             if actual_pos_x < self.idle_max_pos_x + self.idle_margin:
                 self.idle_score += 0.1
             else:
