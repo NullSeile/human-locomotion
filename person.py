@@ -1,75 +1,106 @@
 from typing import List, Dict
-from Box2D import b2World, b2Joint, b2Vec2
-import pandas as pd
+from Box2D import b2World, b2Vec2
 
-from world_object import WorldObject
-from body_parser import parse_body
+from body_parser import parse_body, get_body_initial_pos
 from utils import Vec2, Color
-
-import numpy as np
-
-from metrics import max_distance_person
+from metrics import average_distance_person
+from genome import Genome
 
 
 class PersonObject:
     def __init__(
         self,
         body_filepath: str,
-        pos: Vec2,
+        # pos: Vec2,
         world: b2World,
         color: Color,
-        angles: Dict[str, float],
+        # angles: Dict[str, float],
     ):
-        if isinstance(pos, tuple):
-            pos = b2Vec2(pos)
+        pos = b2Vec2(get_body_initial_pos(body_filepath))
 
-        self.parts, self.joints = parse_body(body_filepath, pos, world, color, angles)
+        self.parts, self.joints = parse_body(
+            body_filepath,
+            pos,
+            world,
+            color,
+            # angles,
+        )
         self._world = world
 
+    def destroy(self):
+        """
+        Destroy the body.
+        """
+        for joint in self.joints.values():
+            self._world.DestroyJoint(joint)
+        self.joints.clear()
 
-class GeneticData:
-    def __init__(
-        self,
-        pos: Vec2,
-        actions_loop: pd.DataFrame,
-        angles: Dict[str, float],
-    ):
-        self.pos = pos
-        self.actions_loop = actions_loop
-        self.angles = angles
+        for part in self.parts.values():
+            self._world.DestroyBody(part.body)
+        self.parts.clear()
 
 
 class PersonSimulation:
     def __init__(
         self,
         body_filepath: str,
-        gen_data: GeneticData,
+        gen_data: Genome,
         world: b2World,
         color: Color,
-        frames_per_action: int = 5,
     ):
 
-        self.gen_data = gen_data
-        self.person = PersonObject(
-            body_filepath, self.gen_data.pos, world, color, self.gen_data.angles
-        )
+        self.genome = gen_data
+        self.person = PersonObject(body_filepath, world, color)
 
-        self._actual_index = 0
+        self._steps_count = 0
+
+        # Add some metrics
         self.dead = False
         self.score = 0
-        self.frames_per_action = frames_per_action
+
+        self.idle_score = 0
+        self.idle_margin = 0.01
+        self.idle_max_score = 1
+        self.idle_max_pos_x = self.genome.pos.x
 
     def _calculate_dead_score(self):
-        return 1 * max_distance_person(self)
+        return 1 * average_distance_person(self)
 
-    def _calculate_intermediate_score(self):
-        pass
+    def _update_metrics(self):
+        """
+        Update the person's metrics.
+        """
+        actual_pos_x = average_distance_person(self)
+        if self._steps_count > 15:
+            if actual_pos_x < self.idle_max_pos_x + self.idle_margin:
+                self.idle_score += 0.1
+            else:
+                self.idle_score = 0
+                self.idle_max_pos_x = actual_pos_x
+
+    def _is_dead(self) -> bool:
+        head_down = self.person.parts["head"].body.position.y < 0.7
+        is_idle = self.idle_score > self.idle_max_score
+        return head_down or is_idle
+
+    def update_status(self):
+        """
+        Updates the person's status and checks if it is dead. If it is,
+        the person is removed from the world. If it is not dead, the
+        person's score is updated.
+        """
+        t = self._steps_count
+        if not self.dead:
+            if self._is_dead():
+                self.dead = True
+                self.score = self._calculate_dead_score()
+                self.person.destroy()
+                return True
+            self._update_metrics()
 
     def step(self) -> bool:
         """
-        Update the person's position and checks if it is dead. If it is,
-        the person is removed from the world. If it is not dead, the
-        person's score is updated.
+        Update the person's position
 
         Parameters
         ----------
@@ -81,19 +112,10 @@ class PersonSimulation:
         bool
             True if the person is dead, False otherwise.
         """
-        t = self._actual_index
+        t = self._steps_count
         if not self.dead:
-            if self._is_dead() or t >= self.frames_per_loop * self.n_loops:
-                self.dead = True
-                self.score = self._calculate_dead_score(t)
-                self.person.destroy()
-                return True
-            if t % self.frames_per_action == 0:
-                for joint_id, joint in self.person.joints.items():
-                    loop_index = (t // self.frames_per_action) % len(
-                        self.gen_data.actions_loop
-                    )
-                    joint.motorSpeed = self.gen_data.actions_loop[loop_index][joint_id]
-            self._calculate_intermediate_score()
-        self._actual_index += 1
+            for joint_id, joint in self.person.joints.items():
+                loop_index = t % len(self.genome.actions_loop)
+                joint.motorSpeed = self.genome.actions_loop[loop_index][joint_id]
+        self._steps_count += 1
         return False

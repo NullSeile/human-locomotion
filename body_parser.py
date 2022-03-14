@@ -10,6 +10,11 @@ from utils import Color, deg2rad, rotate, Vec2
 BODY_SCALE = 21
 
 
+def get_body_initial_pos(path: str) -> Vec2:
+    bodyDef: dict = json.load(open(path))
+    return b2Vec2(bodyDef["pos"])
+
+
 def get_joints_def(path: str) -> dict:
     jonits_def = dict()
     body_def: dict = json.load(open(path))

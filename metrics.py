@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def max_distance_person(person):
+def average_distance_person(person):
     avg_leg_x = np.average(
         [person.person.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
     )

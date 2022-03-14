@@ -111,7 +111,7 @@ def evolve_generation(
         angles: Dict[str, float] = dict()
         for joint_id in joints:
             person_index = np.random.choice(range(population_size), p=distr)
-            angles[joint_id] = actions_list[person_index].angles[joint_id]
+            # angles[joint_id] = actions_list[person_index].angles[joint_id]
 
         new_actions_list.append(MotionData(angles, loop, frames_per_action))
 

@@ -40,6 +40,10 @@ def hsv2rgb(h: float, s: float, v: float, a: float = 1):
 
     return (hsv[0] * 255, hsv[1] * 255, hsv[2] * 255, a * 255)
 
+def get_rgb_iris_index(index: int, max_index: int) -> Color:
+    colour = hsv2rgb(index / max_index, 0.5, 0.8, 0.5)
+    return colour
+
 
 def rotate(v: Vec2, a: float) -> Vec2:
     if isinstance(v, tuple):
