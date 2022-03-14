@@ -126,7 +126,7 @@ def get_random_body_angles(path: str, scale: float = 1) -> Dict[str, float]:
 
 
 if __name__ == "__main__":
-    from utils import RESORUCES_PATH
+    from utils import ASSETS_PATH
     import pygame
     from pygame.locals import QUIT  # type: ignore
     import sys
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     height = 600
     screen = pygame.display.set_mode((width, height))
 
-    body_path = RESORUCES_PATH + "bodies/body1.json"
+    body_path = ASSETS_PATH + "bodies/body1.json"
 
     angles = get_random_body_angles(body_path)
     parts, joints = parse_body(

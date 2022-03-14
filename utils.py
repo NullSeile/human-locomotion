@@ -3,11 +3,15 @@ import pygame
 from typing import Tuple, Union
 from colorsys import hsv_to_rgb
 from Box2D import b2Vec2
+import os
 
-RESORUCES_PATH = "./resources/"
+ASSETS_PATH = "./assets/"
 
 Color = Tuple[int, int, int, int]
 Vec2 = Union[b2Vec2, Tuple[float, float]]
+
+
+DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/body1.json")
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
 def map(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
@@ -39,6 +43,7 @@ def hsv2rgb(h: float, s: float, v: float, a: float = 1):
     hsv = hsv_to_rgb(h, s, v)
 
     return (hsv[0] * 255, hsv[1] * 255, hsv[2] * 255, a * 255)
+
 
 def get_rgb_iris_index(index: int, max_index: int) -> Color:
     colour = hsv2rgb(index / max_index, 0.5, 0.8, 0.5)

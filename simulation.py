@@ -6,12 +6,13 @@ import pygame
 import pandas as pd
 import numpy as np
 from genome import GenomeFactory
+from tqdm import tqdm
 
 # Our imports
 from person import PersonSimulation
 from world_object import WorldObject
 from draw import draw_world
-from utils import RESORUCES_PATH, get_rgb_iris_index
+from utils import ASSETS_PATH, get_rgb_iris_index
 
 
 class Simulation:
@@ -86,7 +87,11 @@ class Simulation:
 
     def _run_generation(self):
         t = 0
-        while not all([p.dead for p in self.population]):
+        pbar = tqdm(total=self.population_size, desc="Simulating")
+        while self.population_size > (
+            dead_population_count := sum([p.dead for p in self.population])
+        ):
+
             self.world.Step(1 / self._fps, 2, 1)
             if self._syncronous_drawing:
                 draw_world(self._screen, self.population, self.floor)
@@ -96,6 +101,10 @@ class Simulation:
             for person in self.population:
                 person.update_status()
             t += 1
+            pbar.n = dead_population_count
+            pbar.refresh()
+        pbar.n = dead_population_count
+        pbar.refresh()
         return [p.score for p in self.population]
 
     def _breed(self):
@@ -103,12 +112,13 @@ class Simulation:
         Breed the population.
         """
         scores = [p.score for p in self.population]
+        print("Max score:" + str(max(scores)))
         distr = np.array(scores) / sum(scores)
 
         genomes = [p.genome for p in self.population]
 
         new_population: List[PersonSimulation] = []
-        for i in range(self.population_size):
+        for i in tqdm(range(self.population_size), desc="Breeding  "):
 
             # genome = self.genome_factory.old_get_genome_from_breed(genomes, distr)
             genome = self.genome_factory.get_genome_from_breed(genomes, distr)

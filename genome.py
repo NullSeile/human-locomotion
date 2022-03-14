@@ -7,9 +7,8 @@ import os
 # Private imports
 from utils import Vec2, Color
 from body_parser import get_joints_def, get_body_initial_pos
-from utils import RESORUCES_PATH
+from utils import DEFAULT_BODY_PATH
 
-_DEFAULT_BODY_PATH = os.path.join(RESORUCES_PATH, "bodies/body1.json")
 
 
 class Genome:
@@ -80,7 +79,7 @@ _MAX_FUSION_DEPTH = 5
 class GenomeFactory:
     def __init__(
         self,
-        bodypath: str = _DEFAULT_BODY_PATH,
+        bodypath: str = DEFAULT_BODY_PATH,
         number_actions_loop: int = 15,
         number_actions_first_step: int = 5,
     ):
