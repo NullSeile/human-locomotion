@@ -5,13 +5,13 @@ import os
 import pygame
 import pandas as pd
 import numpy as np
-from genome import GenomeFactory
+from simulation.genome import GenomeFactory
 from tqdm import tqdm
 
 # Our imports
-from person import PersonSimulation
-from world_object import WorldObject
-from draw import draw_world
+from simulation.person import PersonSimulation
+from simulation.world_object import WorldObject
+from display.draw import draw_world
 from utils import ASSETS_PATH, get_rgb_iris_index
 
 

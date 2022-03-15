@@ -6,9 +6,8 @@ import os
 
 # Private imports
 from utils import Vec2, Color
-from body_parser import get_joints_def, get_body_initial_pos
+from io_management.body_parser import get_joints_def, get_body_initial_pos
 from utils import DEFAULT_BODY_PATH
-
 
 
 class Genome:

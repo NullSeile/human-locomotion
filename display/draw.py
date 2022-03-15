@@ -3,7 +3,7 @@ import sys
 
 from pygame.locals import QUIT  # type: ignore
 
-from person import PersonObject
+from simulation.person import PersonObject
 from utils import Vec2
 
 

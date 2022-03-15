@@ -1,10 +1,10 @@
 from typing import List, Dict
 from Box2D import b2World, b2Vec2
 
-from body_parser import parse_body, get_body_initial_pos
+from io_management.body_parser import parse_body, get_body_initial_pos
 from utils import Vec2, Color
-from metrics import average_distance_person
-from genome import Genome
+from simulation.metrics import average_distance_person
+from simulation.genome import Genome
 
 
 class PersonObject:

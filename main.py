@@ -1,7 +1,7 @@
 import pygame
 
-from simulation import Simulation
-from genome import GenomeFactory
+from simulation.simulation import Simulation
+from simulation.genome import GenomeFactory
 import argparse
 from utils import DEFAULT_BODY_PATH
 
