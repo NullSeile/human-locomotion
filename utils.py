@@ -16,25 +16,8 @@ Vec2 = Tuple[float, float]
 DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/body1.json")
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
-def map(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
+def scale(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
     return y0 + ((y1 - y0) / (x1 - x0)) * (x - x0)
-
-
-def to_screen_pos(
-    pos: Vec2,
-    center: Vec2,
-    radius: float,
-    screen,
-) -> Vec2:
-    width = screen.get_width()
-    height = screen.get_height()
-
-    aspect = width / height
-
-    x = map(pos[0], center[0] - radius * aspect, center[0] + radius * aspect, 0, width)
-    y = map(pos[1], center[1] - radius, center[1] + radius, height, 0)
-
-    return b2Vec2(x, y)
 
 
 def deg2rad(deg: float) -> float:

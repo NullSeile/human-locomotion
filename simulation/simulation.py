@@ -1,137 +1,156 @@
 # Global imports
-from typing import List, Dict, Optional
+from multiprocessing.pool import AsyncResult
+from typing import Any, List, Optional, Tuple
 from Box2D import b2World
+
 import os
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
+
 import pygame
-import pandas as pd
 import numpy as np
-from simulation.genome import GenomeFactory
+from simulation.genome import Genome, GenomeFactory
 from tqdm import tqdm
+import multiprocessing as mp
 
 # Our imports
 from simulation.person import PersonSimulation
 from simulation.world_object import WorldObject
+
 from display.draw import draw_world
-from utils import ASSETS_PATH, get_rgb_iris_index
+from utils import ASSETS_PATH, DEFAULT_BODY_PATH, get_rgb_iris_index
 
 
 class Simulation:
     def __init__(
         self,
         # Genome params
-        # bodypath: str = _DEFAULT_BODY_PATH,
         genome_factory: GenomeFactory,
-        # Drawing params
-        syncronous_drawing: bool = False,
-        screen_to_draw: Optional[pygame.surface.Surface] = None,
         # Simulation params
         fps: int = 30,
-        population_size: int = 60,
-        loop_time: int = 3,  # In seconds, how much does the loop lasts
+        population_size: int = 64,
+        parallel: bool = True,
+        n_processes: int = 4,
         frames_per_step: int = 5,
+        # Drawing
+        screen_to_draw: Optional[pygame.surface.Surface] = None,
     ):
-        self.world: b2World = None
-        self.floor: WorldObject = None
-
-        self.population: List[PersonSimulation] = []
-        self.genome_params_constructor = None
-
-        self.population_size = population_size
-
         self.genome_factory = genome_factory
 
-        self.scores = None
-        self._syncronous_drawing = syncronous_drawing
-        if self._syncronous_drawing and screen_to_draw is None:
-            raise Exception(
-                "Screen must be given if syncronous drawing is used. (using"
-                " screen_to_draw)"
-            )
-        self._screen = screen_to_draw
+        self.parallel = parallel
+        self.population_size = population_size
+        self.n_processes = n_processes
+
+        if parallel:
+            if population_size % n_processes != 0:
+                raise ValueError(
+                    "In parallel simulation, the population_size must be divisible by"
+                    " the number of processes."
+                )
+
+            if screen_to_draw is not None:
+                raise ValueError("Drawing is not supported yet in parallel simulation")
+
+        self.screen_to_draw = screen_to_draw
+
         self._fps = fps
         self.frames_per_step = frames_per_step
 
-        self.generation_index = 0
-        self._create_world()
-
-    def _create_world(self):
-        self.world = b2World(gravity=(0, -9.8))
-        self.floor = WorldObject(
+    def _create_world(self) -> Tuple[b2World, WorldObject]:
+        world = b2World(gravity=(0, -9.8))
+        floor = WorldObject(
             [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
-            self.world,
+            world,
             (0, 0),
             0,
             dynamic=False,
         )
+        return world, floor
 
-    def __check_world_creation(self):
-        """
-        Checks if the world has been created.
-        """
-        if self.world is None:
-            raise Exception("World has not been created yet.")
-
-    def _create_initial_population(self):
-        self.__check_world_creation()
-        # Create people
-        # people: List[Person] = list()
+    def _create_initial_genomes(self) -> List[Genome]:
+        genomes: List[Genome] = []
         for i in range(self.population_size):
-            genetic_params = self.genome_factory.get_random_genome()
-            person = PersonSimulation(
-                self.genome_factory.body_path,
-                genetic_params,
-                self.world,
-                get_rgb_iris_index(i, self.population_size),
-            )  # haha hasn't been implemented yet
-            self.population.append(person)
+            genomes.append(self.genome_factory.get_random_genome())
 
-    def _run_generation(self):
-        t = 0
-        pbar = tqdm(total=self.population_size, desc="Simulating")
-        while self.population_size > (
-            dead_population_count := sum([p.dead for p in self.population])
-        ):
+        return genomes
 
-            self.world.Step(1 / self._fps, 2, 1)
-            if self._syncronous_drawing:
-                draw_world(self._screen, self.population, self.floor)
-            if t % self.frames_per_step == 0:
-                for person in self.population:
-                    person.step()
-            for person in self.population:
-                person.update_status()
-            t += 1
-            pbar.n = dead_population_count
-            pbar.refresh()
-        pbar.n = dead_population_count
-        pbar.refresh()
-        return [p.score for p in self.population]
-
-    def _breed(self):
-        """
-        Breed the population.
-        """
-        scores = [p.score for p in self.population]
-        print("Max score:" + str(max(scores)))
-        distr = np.array(scores) / sum(scores)
-
-        genomes = [p.genome for p in self.population]
-
-        new_population: List[PersonSimulation] = []
-        for i in tqdm(range(self.population_size), desc="Breeding  "):
-
-            # genome = self.genome_factory.old_get_genome_from_breed(genomes, distr)
-            genome = self.genome_factory.get_genome_from_breed(genomes, distr)
+    def _create_population_from_genomes(
+        self, genomes: List[Genome], world: b2World
+    ) -> List[PersonSimulation]:
+        population: List[PersonSimulation] = []
+        for i, genome in enumerate(genomes):
             person = PersonSimulation(
                 self.genome_factory.body_path,
                 genome,
-                self.world,
-                get_rgb_iris_index(i, self.population_size),
-            )  # haha hasn't been implemented yet
+                world,
+                get_rgb_iris_index(i, len(genomes)),
+            )
+            population.append(person)
 
-            new_population.append(person)
+        return population
 
-        self.population = new_population
+    def _run_generation(self, genomes: List[Genome]) -> List[float]:
+
+        world, floor = self._create_world()
+        population = self._create_population_from_genomes(genomes, world)
+
+        t = 0
+        while not all([p.dead for p in population]):
+
+            world.Step(1 / self._fps, 2, 1)
+            if t % self.frames_per_step == 0:
+                for person in population:
+                    person.step()
+            for person in population:
+                person.update_status()
+
+            if self.screen_to_draw is not None and not self.parallel:
+                draw_world(self.screen_to_draw, population, floor)
+
+            t += 1
+
+        return [p.score for p in population]
+
+    def _run_generation_parallel(self, genomes: List[Genome]) -> List[float]:
+        pool = mp.Pool(self.n_processes)
+        returns: List[AsyncResult] = []
+
+        population_per_process = self.population_size // self.n_processes
+
+        for n in range(self.n_processes):
+            sli = slice(
+                population_per_process * n,
+                population_per_process * (n + 1),
+            )
+            returns.append(
+                pool.apply_async(
+                    self._run_generation,
+                    args=[genomes[sli]],
+                )
+            )
+
+        pool.close()
+        pool.join()
+
+        scores: List[float] = []
+        for p in returns:
+            scores += p.get()
+
+        return scores
+
+    def _breed(self, genomes: List[Genome], scores: List[float]) -> List[Genome]:
+        """
+        Breed the population.
+        """
+        print("Max score:" + str(max(scores)))
+        distr: List[float] = list(np.array(scores) / sum(scores))
+
+        new_genomes: List[Genome] = []
+        for _ in tqdm(range(self.population_size), desc="Breeding  "):
+            genome = self.genome_factory.get_genome_from_breed(genomes, distr)
+            new_genomes.append(genome)
+
+        return new_genomes
 
     def has_converged(self, threshold: float = 0.01) -> bool:
         """
@@ -146,8 +165,12 @@ class Simulation:
         # )
 
     def run(self):
-        self._create_initial_population()
+        genomes = self._create_initial_genomes()
+
         while not self.has_converged():
-            self._run_generation()
-            self._breed()
-            self.generation_index += 1
+            scores = (
+                self._run_generation_parallel(genomes)
+                if self.parallel
+                else self._run_generation(genomes)
+            )
+            genomes = self._breed(genomes, scores)
