@@ -1,5 +1,6 @@
 import math
-import pygame
+
+# import pygame
 from typing import Tuple, Union
 from colorsys import hsv_to_rgb
 from Box2D import b2Vec2
@@ -8,7 +9,8 @@ import os
 ASSETS_PATH = "./assets/"
 
 Color = Tuple[int, int, int, int]
-Vec2 = Union[b2Vec2, Tuple[float, float]]
+# Vec2 = Union[b2Vec2, Tuple[float, float]]
+Vec2 = Tuple[float, float]
 
 
 DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/body1.json")
@@ -22,7 +24,7 @@ def to_screen_pos(
     pos: Vec2,
     center: Vec2,
     radius: float,
-    screen: pygame.surface.Surface,
+    screen,
 ) -> Vec2:
     width = screen.get_width()
     height = screen.get_height()

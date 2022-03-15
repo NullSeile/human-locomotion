@@ -1,12 +1,12 @@
 import pygame
 
-from simulation.simulation import Simulation
 from simulation.genome import GenomeFactory
 import argparse
+from simulation.simulation_paral import Simulation
 from utils import DEFAULT_BODY_PATH
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Genetic simulation for bipedal walkers."
     )
@@ -43,8 +43,8 @@ if __name__ == "__main__":
         genome_factory,
         frames_per_step=actions_per_sec,
         fps=30,
-        screen_to_draw=args.display,
-        population_size=args.population,
-        # syncronous_drawing=True,
+        # screen_to_draw=args.display,
+        population_per_process=3,
+        n_processes=2,
     )
     simulation.run()

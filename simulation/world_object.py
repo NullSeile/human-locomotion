@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import List
-import pygame
-from pygame import gfxdraw
+
+# import pygame
+# from pygame import gfxdraw
 from Box2D import (
     b2World,
     b2PolygonShape,
@@ -46,13 +47,13 @@ class WorldObject:
             angle=angle,
         )
 
-    def draw(self, screen: pygame.surface.Surface, center: b2Vec2, radius: float):
-        trans = self.body.transform
+    # def draw(self, screen: pygame.surface.Surface, center: b2Vec2, radius: float):
+    #     trans = self.body.transform
 
-        path = [
-            to_screen_pos(trans * v, center, radius, screen)
-            for v in self.shape.vertices
-        ]
-        gfxdraw.filled_polygon(screen, path, self.color)
-        gfxdraw.aapolygon(screen, path, self.color)
-        pygame.draw.polygon(screen, color=(120, 120, 120), points=path, width=1)
+    #     path = [
+    #         to_screen_pos(trans * v, center, radius, screen)
+    #         for v in self.shape.vertices
+    #     ]
+    #     gfxdraw.filled_polygon(screen, path, self.color)
+    #     gfxdraw.aapolygon(screen, path, self.color)
+    #     pygame.draw.polygon(screen, color=(120, 120, 120), points=path, width=1)

@@ -57,13 +57,12 @@ class PersonSimulation:
         # Add some metrics
         self.dead = False
         self.score = 0
-
         self.idle_score = 0
         self.idle_margin = 0.1
         self.idle_max_score = 1
-        self.idle_max_pos_x = self.genome.pos.x
+        self.idle_max_pos_x = self.genome.pos[0]
 
-    def _calculate_dead_score(self):
+    def _calculate_dead_score(self) -> float:
         return 1 * average_distance_person(self)
 
     def _update_metrics(self):

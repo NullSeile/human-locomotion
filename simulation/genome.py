@@ -2,10 +2,9 @@
 from typing import List, Dict, Optional
 import pandas as pd
 import numpy as np
-import os
 
 # Private imports
-from utils import Vec2, Color
+from utils import Vec2
 from io_management.body_parser import get_joints_def, get_body_initial_pos
 from utils import DEFAULT_BODY_PATH
 
@@ -87,7 +86,7 @@ class GenomeFactory:
         self.number_actions_loop = number_actions_loop  # loop_time * actions_per_sec
         self.number_actions_first_step = number_actions_first_step
         self.initial_pos = get_body_initial_pos(self.body_path)
-        self._joints = get_joints_def(bodypath)
+        self._joints = get_joints_def(self.body_path)
 
     def get_random_genome(self):
         return get_random_genome(self.body_path, self.number_actions_loop, None)
