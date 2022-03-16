@@ -9,16 +9,16 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
 import pygame
 import numpy as np
-from simulation.genome import Genome, GenomeFactory
 from tqdm import tqdm
 import multiprocessing as mp
 
 # Our imports
-from simulation.person import PersonSimulation
-from simulation.world_object import WorldObject
+from hl.simulation.genome import Genome, GenomeFactory
+from hl.simulation.person import PersonSimulation
+from hl.simulation.world_object import WorldObject
 
-from display.draw import draw_world
-from utils import ASSETS_PATH, DEFAULT_BODY_PATH, get_rgb_iris_index
+from hl.display.draw import draw_world
+from hl.utils import ASSETS_PATH, DEFAULT_BODY_PATH, get_rgb_iris_index
 
 
 class Simulation:
@@ -96,14 +96,19 @@ class Simulation:
 
         t = 0
         while not all([p.dead for p in population]):
-
+            # Step in the world
             world.Step(1 / self._fps, 2, 1)
+
+            # If enough time has passed, update the population
             if t % self.frames_per_step == 0:
                 for person in population:
                     person.step()
+
+            # Update metrics of population
             for person in population:
                 person.update_status()
 
+            # Draw the world
             if self.screen_to_draw is not None and not self.parallel:
                 draw_world(self.screen_to_draw, population, floor)
 
@@ -130,6 +135,7 @@ class Simulation:
             )
 
         pool.close()
+
         pool.join()
 
         scores: List[float] = []
@@ -151,6 +157,19 @@ class Simulation:
             new_genomes.append(genome)
 
         return new_genomes
+
+    def obtain_some_genomes(self, n: int) -> List[Genome]:
+        """
+        Obtain some genomes from the population. It is thread-safe. First
+        it locks the accesss to self.some_genomes, then obtains n genomes
+        well distributed through the scores.
+        """
+        self._lock_genomes.acquire()
+        if len(self.some_genomes) < n:
+            self.some_genomes = self.genome_factory.get_random_genomes(n)
+        self._lock_genomes.release()
+
+        return self.some_genomes[:n]
 
     def has_converged(self, threshold: float = 0.01) -> bool:
         """

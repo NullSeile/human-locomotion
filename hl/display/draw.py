@@ -1,4 +1,5 @@
 import os
+
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
 import sys
@@ -7,9 +8,9 @@ import pygame
 from pygame import gfxdraw
 from pygame.locals import QUIT  # type: ignore
 
-from simulation.world_object import WorldObject
-from simulation.person import PersonObject
-from utils import Vec2, scale
+from hl.simulation.world_object import WorldObject
+from hl.simulation.person import PersonObject
+from hl.utils import Vec2, scale
 
 
 def to_screen_pos(

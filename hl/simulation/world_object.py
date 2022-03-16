@@ -11,7 +11,7 @@ from Box2D import (
     b2_staticBody,
 )
 
-from utils import Color
+from hl.utils import Color
 
 
 class WorldObject:
