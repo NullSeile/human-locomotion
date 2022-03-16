@@ -7,6 +7,7 @@ import argparse
 import threading
 import time
 import multiprocessing as mp
+import numpy as np
 
 from simulation.genome import GenomeFactory
 from simulation.simulation import Simulation
@@ -18,16 +19,24 @@ import random
 
 
 def display_async(simulation: Simulation, screen: pygame.Surface, data_queue: mp.Queue):
-
+    N_ELEMENTS = 16
     # world, floor = create_a_world()
     # last_genomes, last_genomes_gen = simulation.obtain_last_genomes()
     if data_queue.empty():
         return
     generation, last_genomes, last_scores = data_queue.get()
+
     if last_genomes is None:
         print("No genomes to display yet")
         return
-    selected_genomes = random.sample(last_genomes, 50)
+    if last_scores is not None:
+        gs = list(zip(last_genomes, last_scores))
+        gs = sorted(gs, key=lambda x: x[1], reverse=True)
+        idx = np.round(np.linspace(0, len(gs) - 1, N_ELEMENTS)).astype(int)
+        selected_genomes = [gs[i][0] for i in idx]
+        # print("Selected idx and its score", idx, [gs[i][1] for i in idx])
+    else:
+        selected_genomes = last_genomes[:N_ELEMENTS]
     print("Displaying generation {}".format(generation))
     run_a_generation(
         simulation.genome_factory,

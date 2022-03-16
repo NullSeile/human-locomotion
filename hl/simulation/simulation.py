@@ -277,10 +277,17 @@ class Simulation:
         elite_genomes = gs[: self.elite_genomes]
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
+
+        # Select only best 40 genomes to breed
+        s_gs = gs[:40]
+        s_genomes = [e[0] for e in s_gs]
+        s_distr = list(
+            np.array([e[1] for e in s_gs]) / sum([e[1] for e in s_gs])
+        )
         for _ in tqdm(
             range(self.population_size - self.elite_genomes), desc="Breeding  "
         ):
-            genome = self.genome_factory.old_get_genome_from_breed(genomes, distr)
+            genome = self.genome_factory.old_get_genome_from_breed(s_genomes, s_distr)
             new_genomes.append(genome)
 
         return new_genomes
