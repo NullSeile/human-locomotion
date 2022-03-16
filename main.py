@@ -1,12 +1,16 @@
-import pygame
+import os
 
-from simulation.simulation import Simulation
-from simulation.genome import GenomeFactory
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
+
+import pygame
 import argparse
+
+from simulation.genome import GenomeFactory
+from simulation.simulation import Simulation
 from utils import DEFAULT_BODY_PATH
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Genetic simulation for bipedal walkers."
     )
@@ -22,11 +26,11 @@ if __name__ == "__main__":
         default=100,
         help="Number of individuals in the population.",
     )
-    parser.add_argument(
-        "--display",
-        action="store_true",
-        help="Whether or not display the simulation.",
-    )
+    # parser.add_argument(
+    #     "--display",
+    #     action="store_true",
+    #     help="Whether or not display the simulation.",
+    # )
 
     args = parser.parse_args()
     # width = 900
@@ -43,8 +47,9 @@ if __name__ == "__main__":
         genome_factory,
         frames_per_step=actions_per_sec,
         fps=30,
-        screen_to_draw=args.display,
-        population_size=args.population,
-        # syncronous_drawing=True,
+        # screen_to_draw=screen,
+        parallel=True,
+        population_size=512,
+        n_processes=8,
     )
     simulation.run()

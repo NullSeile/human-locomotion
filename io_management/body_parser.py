@@ -12,7 +12,8 @@ BODY_SCALE = 21
 
 def get_body_initial_pos(path: str) -> Vec2:
     bodyDef: dict = json.load(open(path))
-    return b2Vec2(bodyDef["pos"])
+    pos = bodyDef["pos"]
+    return pos[0], pos[1]
 
 
 def get_joints_def(path: str) -> dict:
@@ -123,57 +124,3 @@ def get_random_body_angles(path: str, scale: float = 1) -> Dict[str, float]:
                 angles[joint_id] = 0
 
     return angles
-
-
-if __name__ == "__main__":
-    from utils import ASSETS_PATH
-    import pygame
-    from pygame.locals import QUIT  # type: ignore
-    import sys
-    import numpy as np
-
-    world = b2World(gravity=(0, -9.8))
-
-    width = 900
-    height = 600
-    screen = pygame.display.set_mode((width, height))
-
-    body_path = ASSETS_PATH + "bodies/body1.json"
-
-    angles = get_random_body_angles(body_path)
-    parts, joints = parse_body(
-        body_path,
-        (0, 2),
-        0,
-        world,
-        (255, 255, 255, 255),
-        angles,
-    )
-
-    parts["_floor"] = WorldObject(
-        [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
-        world,
-        (0, 0),
-        0,
-        dynamic=False,
-    )
-
-    fps = 60
-    clock = pygame.time.Clock()
-    while True:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-
-        screen.fill((0, 0, 0))
-
-        world.Step(1 / fps, 6, 3)
-
-        for b in parts.values():
-            b.draw(screen, (0, 2), 2)
-
-        pygame.display.flip()
-        pygame.display.update()
-
-        clock.tick(fps) / 1000
