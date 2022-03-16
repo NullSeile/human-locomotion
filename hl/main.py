@@ -8,13 +8,6 @@ import argparse
 from simulation.genome import GenomeFactory
 from simulation.simulation import Simulation
 from hl.utils import DEFAULT_BODY_PATH
-from hl.display.draw import draw_world
-
-
-def display_async(simulation: Simulation, screen: pygame.Surface):
-    while True:
-        draw_world(simulation, screen)
-        pygame.display.flip()
 
 
 if __name__ == "__main__":
