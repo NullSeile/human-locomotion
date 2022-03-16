@@ -4,17 +4,40 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
 import pygame
 import argparse
+import threading
+import time
 
 from simulation.genome import GenomeFactory
 from simulation.simulation import Simulation
 from hl.utils import DEFAULT_BODY_PATH
 from hl.display.draw import draw_world
 
+from hl.simulation.simulation import run_a_generation
+
 
 def display_async(simulation: Simulation, screen: pygame.Surface):
-    while True:
-        draw_world(simulation, screen)
-        pygame.display.flip()
+
+    # world, floor = create_a_world()
+    last_genomes, last_genomes_gen = simulation.obtain_last_genomes()
+    if last_genomes is None:
+        print("No genomes to display yet")
+        return
+    print("LEN GENOMES?", len(last_genomes))
+    print("Displaying generation {}".format(last_genomes_gen))
+    run_a_generation(
+        simulation.genome_factory,
+        last_genomes,
+        simulation._fps,
+        simulation.frames_per_step,
+        False,
+        screen,
+    )
+    # pygame.display.flip()
+
+
+def check_thread_alive(thr):
+    thr.join(timeout=0.0)
+    return thr.is_alive()
 
 
 if __name__ == "__main__":
@@ -67,9 +90,19 @@ if __name__ == "__main__":
         genome_factory,
         frames_per_step=actions_per_sec,
         fps=30,
-        screen_to_draw=screen,
+        # screen_to_draw=screen,
         parallel=args.n_processes > 1,
         population_size=args.population,
         n_processes=args.n_processes,
     )
-    simulation.run()
+
+    population_lock = threading.Lock()
+    simulation.add_population_lock(population_lock)
+    simulation_thread = threading.Thread(target=simulation.run)
+    simulation_thread.start()
+    if args.display:
+        while check_thread_alive(simulation_thread):
+            display_async(simulation, screen)
+            time.sleep(0.1)
+    simulation_thread.join()
+    print("Finished")
