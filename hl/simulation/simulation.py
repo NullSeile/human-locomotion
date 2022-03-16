@@ -84,6 +84,30 @@ def run_a_generation(
     return [p.score for p in population]
 
 
+import time
+
+
+class SimulationQueuePutter(threading.Thread):
+    def __init__(self, queue: mp.Queue):
+        super().__init__()
+        self.queue = queue
+        self.data = None
+
+    def run(self):
+        while True:
+            if self.data is not None:
+                while not self.queue.empty():
+                    self.queue.get()
+                self.queue.put(self.data)
+                self.data = None
+            time.sleep(0.1)
+
+    def add_last_genomes(
+        self, generation: int, genomes: List[Genome], scores: List[float]
+    ) -> None:
+        self.data = (generation, genomes, scores)
+
+
 class Simulation:
     def __init__(
         self,
@@ -98,9 +122,10 @@ class Simulation:
         # Parallel parameters
         parallel: bool = True,
         n_processes: int = 4,
-        population_lock: Optional[threading.Lock] = None,
+        elite_genomes: int = 4,
     ):
         self.genome_factory = genome_factory
+        self.elite_genomes = elite_genomes
 
         self.parallel = parallel
         self.population_size = population_size
@@ -121,12 +146,19 @@ class Simulation:
 
         self._fps = fps
         self.frames_per_step = frames_per_step
-        self.population_lock = population_lock
+        # self.population_lock = population_lock
+        # self.population_queue = population_queue
+        # if self.parallel and self.population_lock is None:
+        #     raise (
+        #         ValueError("If parallel simulation is enabled, a lock must be provided")
+        #     )
+        self.population_queue_manager = None
         self._last_genomes = None
         self._last_genomes_generation = self.generation_count
 
-    def add_population_lock(self, lock: mp.Lock) -> None:
-        self.population_lock = lock
+    def add_population_queue(self, queue: mp.Queue) -> None:
+        self.population_queue_manager = SimulationQueuePutter(queue)
+        threading.Thread(target=self.population_queue_manager.run).start()
 
     def add_last_genomes(
         self, genomes: List[Genome], scores: List[float], skip_if_blocked=True
@@ -136,31 +168,34 @@ class Simulation:
         method is thread-safe.
         """
         # Save lock for parallel simulation
-        if self.parallel and self.population_lock is None:
-            raise (
-                ValueError("If parallel simulation is enabled, a lock must be provided")
-            )
-        timeout = 0.00001 if skip_if_blocked else None
-        try:
-            print("AQUIRING LOCK")
-            self.population_lock.acquire(timeout=timeout)
-            self._last_genomes = genomes
-            self._last_genomes_scores = scores
-            self._last_genomes_generation = self.generation_count
+        # if self.parallel and self.population_lock is None:
+        #     raise (
+        #         ValueError("If parallel simulation is enabled, a lock must be provided")
+        #     )
+        # timeout = 0.00001 if skip_if_blocked else None
+        # try:
+        # print("AQUIRING LOCK")
+        # self.population_lock.acquire(timeout=timeout)
+        # self._last_genomes = genomes
+        # self._last_genomes_scores = scores
+        # self._last_genomes_generation = self.generation_count
+        self.population_queue_manager.add_last_genomes(
+            self.generation_count, genomes, scores
+        )
 
-            print("RELEASING LOCK")
-            self.population_lock.release()
-        except Exception as e:
-            print("FAILED TO AQUIRE:", e)
-            return
+        # print("RELEASING LOCK")
+        # self.population_lock.release()
+        # except Exception as e:
+        #     print("FAILED TO AQUIRE:", e)
+        #     return
 
-    def obtain_last_genomes(self) -> List[Genome]:
-        with self.population_lock:
-            last_genomes, last_genomes_gen = (
-                self._last_genomes,
-                self._last_genomes_generation,
-            )
-        return last_genomes, last_genomes_gen
+    # def obtain_last_genomes(self) -> List[Genome]:
+    #     # with self.population_lock:
+    #     last_genomes, last_genomes_gen = (
+    #         self._last_genomes,
+    #         self._last_genomes_generation,
+    #     )
+    #     return last_genomes, last_genomes_gen
 
     def _create_world(self) -> Tuple[b2World, WorldObject]:
         return create_a_world()
@@ -236,9 +271,16 @@ class Simulation:
         print("Max score:" + str(max(scores)))
         distr: List[float] = list(np.array(scores) / sum(scores))
 
-        new_genomes: List[Genome] = []
-        for _ in tqdm(range(self.population_size), desc="Breeding  "):
-            genome = self.genome_factory.get_genome_from_breed(genomes, distr)
+        # Selecting the best genomes to keep for the next generation
+        gs = list(zip(genomes, scores))
+        gs = sorted(gs, key=lambda x: x[1], reverse=True)
+        elite_genomes = gs[: self.elite_genomes]
+
+        new_genomes: List[Genome] = [e[0] for e in elite_genomes]
+        for _ in tqdm(
+            range(self.population_size - self.elite_genomes), desc="Breeding  "
+        ):
+            genome = self.genome_factory.old_get_genome_from_breed(genomes, distr)
             new_genomes.append(genome)
 
         return new_genomes
@@ -268,8 +310,14 @@ class Simulation:
         #     else sum(self.scores) / len(self.scores) < threshold
         # )
 
-    def run(self):
+    def run(self, data_queue: Optional[mp.Queue] = None) -> None:
+        # Init parameters
+        if data_queue is not None:
+            self.add_population_queue(data_queue)
+
+        # Start the simulation
         genomes = self._create_initial_genomes()
+        self.add_last_genomes(genomes, None)
 
         while not self.has_converged():
             self.generation_count += 1
@@ -278,5 +326,5 @@ class Simulation:
                 if self.parallel
                 else self._run_generation(genomes)
             )
-            self.add_last_genomes(genomes, scores)
             genomes = self._breed(genomes, scores)
+            self.add_last_genomes(genomes, scores)
