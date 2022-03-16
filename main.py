@@ -23,8 +23,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--population",
         type=int,
-        default=100,
+        default=1024,
         help="Number of individuals in the population.",
+    )
+    parser.add_argument(
+        "--n_processes",
+        type=int,
+        default=8,
+        help="Number of processes to use for parallel simulation.",
     )
     # parser.add_argument(
     #     "--display",
@@ -49,7 +55,7 @@ if __name__ == "__main__":
         fps=30,
         # screen_to_draw=screen,
         parallel=True,
-        population_size=512,
-        n_processes=8,
+        population_size=args.population,
+        n_processes=args.n_processes,
     )
     simulation.run()
