@@ -3,13 +3,7 @@ import pandas as pd
 import numpy as np
 
 from hl.simulation.genome.genome import Genome, GenomeBreeder
-from hl.simulation.person import PersonObject
 from hl.utils import DEFAULT_BODY_PATH
-from hl.io.body_parser import get_joints_def, get_body_initial_pos
-
-
-# Genoma dona llista de velocitats
-# O genoma fa un update literal a la persona
 
 
 class ArrayGenome(Genome):
@@ -29,13 +23,6 @@ class ArrayGenome(Genome):
         loop_index = t % len(self.actions_loop)
         return dict(self.actions_loop[loop_index])
 
-    # def step(self, t: int, person: PersonObject):
-    #     super().step(t, person)
-
-    #     for joint_id, joint in person.joints.items():
-    #         loop_index = t % len(self.actions_loop)
-    #         joint.motorSpeed = self.actions_loop[loop_index][joint_id]
-
 
 class ArrayGenomeBreeder(GenomeBreeder):
     def __init__(
@@ -51,8 +38,7 @@ class ArrayGenomeBreeder(GenomeBreeder):
 
         self.number_actions_loop = number_actions_loop  # loop_time * actions_per_sec
         self.number_actions_first_step = number_actions_first_step
-        self.initial_pos = get_body_initial_pos(self.body_path)
-        self._joints = get_joints_def(self.body_path)
+        self.initial_pos = self.body_def.pos
 
         self.min_idx_step_breeding = min_idx_step_breeding
         self.max_idx_step_breeding = max_idx_step_breeding
@@ -62,10 +48,10 @@ class ArrayGenomeBreeder(GenomeBreeder):
     def get_random_genome(self) -> ArrayGenome:
         # For now all angles are 0
         # random_angles = get_random_body_angles(body_path, 0.0)
-        joints = get_joints_def(self.body_path)
         random_loop_actions = pd.DataFrame(
-            data=np.random.rand(len(joints), self.number_actions_loop) * 2 - 1,
-            index=joints.keys(),
+            data=np.random.rand(len(self.body_def.joints), self.number_actions_loop) * 2
+            - 1,
+            index=self.body_def.joints.keys(),
         )
         genome = ArrayGenome(
             actions_loop=random_loop_actions,
@@ -73,10 +59,10 @@ class ArrayGenomeBreeder(GenomeBreeder):
         return genome
 
     def get_empty_genome(self) -> ArrayGenome:
-        joints = get_joints_def(self.body_path)
         zeroes_loop_actions = pd.DataFrame(
-            data=np.random.rand(len(joints), self.number_actions_loop) * 2 - 1,
-            index=joints.keys(),
+            data=np.random.rand(len(self.body_def.joints), self.number_actions_loop) * 2
+            - 1,
+            index=self.body_def.joints.keys(),
         )
         return ArrayGenome(
             actions_loop=zeroes_loop_actions,
@@ -123,10 +109,12 @@ class ArrayGenomeBreeder(GenomeBreeder):
         # Mutate the genome
         randarr = np.random.choice(
             [True, False],
-            size=self.number_actions_loop * len(self._joints),
+            size=self.number_actions_loop * len(self.body_def.joints),
             p=[self.random_mutation_occurence, 1 - self.random_mutation_occurence],
         )
-        randmat = np.reshape(randarr, (len(self._joints), self.number_actions_loop))
+        randmat = np.reshape(
+            randarr, (len(self.body_def.joints), self.number_actions_loop)
+        )
         child.actions_loop.iloc[randmat] = np.random.random(
             size=np.count_nonzero(randmat)
         )

@@ -1,7 +1,8 @@
 from typing import List, Dict
 from Box2D import b2World, b2Vec2
 
-from hl.io.body_parser import parse_body, get_body_initial_pos
+from hl.io.body_def import BodyDef
+from hl.io.body_parser import parse_body
 from hl.utils import Vec2, Color
 from hl.simulation.metrics import average_distance_person
 from hl.simulation.genome.genome import Genome
@@ -10,17 +11,14 @@ from hl.simulation.genome.genome import Genome
 class PersonObject:
     def __init__(
         self,
-        body_filepath: str,
+        body_def: BodyDef,
         # pos: Vec2,
         world: b2World,
         color: Color,
         # angles: Dict[str, float],
     ):
-        pos = b2Vec2(get_body_initial_pos(body_filepath))
-
         self.parts, self.joints = parse_body(
-            body_filepath,
-            pos,
+            body_def,
             world,
             color,
             # angles,
@@ -43,14 +41,14 @@ class PersonObject:
 class PersonSimulation:
     def __init__(
         self,
-        body_filepath: str,
+        body_def: BodyDef,
         gen_data: Genome,
         world: b2World,
         color: Color,
     ):
 
         self.genome = gen_data
-        self.person = PersonObject(body_filepath, world, color)
+        self.person = PersonObject(body_def, world, color)
 
         self._steps_count = 0
 

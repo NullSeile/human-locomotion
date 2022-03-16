@@ -80,7 +80,7 @@ class Simulation:
         population: List[PersonSimulation] = []
         for i, genome in enumerate(genomes):
             person = PersonSimulation(
-                self.genome_breeder.body_path,
+                self.genome_breeder.body_def,
                 genome,
                 world,
                 get_rgb_iris_index(i, len(genomes)),

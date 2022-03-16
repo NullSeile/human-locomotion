@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from hl.io.body_def import BodyDef
 
 class Genome:
     def __init__(self):
@@ -12,7 +13,7 @@ class Genome:
 # What was first? the genome or the breeder?
 class GenomeBreeder:
     def __init__(self, body_path: str):
-        self.body_path = body_path
+        self.body_def = BodyDef(body_path)
 
     def get_random_genome(self):
         raise NotImplementedError()
