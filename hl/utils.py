@@ -6,7 +6,7 @@ from colorsys import hsv_to_rgb
 from Box2D import b2Vec2
 import os
 
-ASSETS_PATH = "./assets/"
+ASSETS_PATH = "../assets/"
 
 Color = Tuple[int, int, int, int]
 # Vec2 = Union[b2Vec2, Tuple[float, float]]

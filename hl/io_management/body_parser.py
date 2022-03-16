@@ -1,10 +1,10 @@
 import json
 from typing import Dict, Tuple, Optional
-from simulation.world_object import WorldObject
 from Box2D import b2World, b2RevoluteJoint, b2RevoluteJointDef, b2Vec2
 import numpy as np
 
-from utils import Color, deg2rad, rotate, Vec2
+from hl.simulation.world_object import WorldObject
+from hl.utils import Color, deg2rad, rotate, Vec2
 
 
 BODY_SCALE = 21
