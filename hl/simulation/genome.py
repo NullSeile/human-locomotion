@@ -5,7 +5,7 @@ import numpy as np
 
 # Private imports
 from hl.utils import Vec2
-from hl.io_management.body_parser import get_joints_def, get_body_initial_pos
+from hl.io.body_parser import get_joints_def, get_body_initial_pos
 from hl.utils import DEFAULT_BODY_PATH
 
 
