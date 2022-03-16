@@ -5,7 +5,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame
 import argparse
 
-from simulation.genome import GenomeFactory
+from hl.simulation.genome.array_genome import ArrayGenomeBreeder
 from simulation.simulation import Simulation
 from hl.utils import DEFAULT_BODY_PATH
 
@@ -52,12 +52,13 @@ if __name__ == "__main__":
 
     loop_time = 3
     actions_per_sec = 5
-    genome_factory = GenomeFactory(
-        bodypath=args.bodypath,
+    genome_breeder = ArrayGenomeBreeder(
+        body_path=args.bodypath,
         number_actions_loop=loop_time * actions_per_sec,
+        random_mutation_occurence=0.5,
     )
     simulation = Simulation(
-        genome_factory,
+        genome_breeder,
         frames_per_step=actions_per_sec,
         fps=30,
         screen_to_draw=screen,

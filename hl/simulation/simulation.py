@@ -13,7 +13,7 @@ from tqdm import tqdm
 import multiprocessing as mp
 
 # Our imports
-from hl.simulation.genome import Genome, GenomeFactory
+from hl.simulation.genome.genome import Genome, GenomeBreeder
 from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 
@@ -25,7 +25,7 @@ class Simulation:
     def __init__(
         self,
         # Genome params
-        genome_factory: GenomeFactory,
+        genome_breeder: GenomeBreeder,
         # Simulation params
         fps: int = 30,
         population_size: int = 64,
@@ -35,7 +35,7 @@ class Simulation:
         # Drawing
         screen_to_draw: Optional[pygame.surface.Surface] = None,
     ):
-        self.genome_factory = genome_factory
+        self.genome_breeder = genome_breeder
 
         self.parallel = parallel
         self.population_size = population_size
@@ -70,7 +70,7 @@ class Simulation:
     def _create_initial_genomes(self) -> List[Genome]:
         genomes: List[Genome] = []
         for i in range(self.population_size):
-            genomes.append(self.genome_factory.get_random_genome())
+            genomes.append(self.genome_breeder.get_random_genome())
 
         return genomes
 
@@ -80,7 +80,7 @@ class Simulation:
         population: List[PersonSimulation] = []
         for i, genome in enumerate(genomes):
             person = PersonSimulation(
-                self.genome_factory.body_path,
+                self.genome_breeder.body_path,
                 genome,
                 world,
                 get_rgb_iris_index(i, len(genomes)),
@@ -153,23 +153,10 @@ class Simulation:
 
         new_genomes: List[Genome] = []
         for _ in tqdm(range(self.population_size), desc="Breeding  "):
-            genome = self.genome_factory.get_genome_from_breed(genomes, distr)
+            genome = self.genome_breeder.get_genome_from_breed(genomes, distr)
             new_genomes.append(genome)
 
         return new_genomes
-
-    def obtain_some_genomes(self, n: int) -> List[Genome]:
-        """
-        Obtain some genomes from the population. It is thread-safe. First
-        it locks the accesss to self.some_genomes, then obtains n genomes
-        well distributed through the scores.
-        """
-        self._lock_genomes.acquire()
-        if len(self.some_genomes) < n:
-            self.some_genomes = self.genome_factory.get_random_genomes(n)
-        self._lock_genomes.release()
-
-        return self.some_genomes[:n]
 
     def has_converged(self, threshold: float = 0.01) -> bool:
         """

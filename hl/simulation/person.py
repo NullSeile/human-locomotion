@@ -4,7 +4,7 @@ from Box2D import b2World, b2Vec2
 from hl.io.body_parser import parse_body, get_body_initial_pos
 from hl.utils import Vec2, Color
 from hl.simulation.metrics import average_distance_person
-from hl.simulation.genome import Genome
+from hl.simulation.genome.genome import Genome
 
 
 class PersonObject:
@@ -60,7 +60,8 @@ class PersonSimulation:
         self.idle_score = 0
         self.idle_margin = 0.1
         self.idle_max_score = 1
-        self.idle_max_pos_x = self.genome.pos[0]
+        # TODO: If the x position is not 0 in the body.json we may have problems
+        self.idle_max_pos_x = 0
 
     def _calculate_dead_score(self) -> float:
         return 1 * average_distance_person(self)
@@ -113,8 +114,8 @@ class PersonSimulation:
         """
         t = self._steps_count
         if not self.dead:
-            for joint_id, joint in self.person.joints.items():
-                loop_index = t % len(self.genome.actions_loop)
-                joint.motorSpeed = self.genome.actions_loop[loop_index][joint_id]
+            for joint_id, value in self.genome.step(t).items():
+                self.person.joints[joint_id].motorSpeed = value
+
         self._steps_count += 1
         return False
