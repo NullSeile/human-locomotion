@@ -8,6 +8,9 @@ from hl.simulation.metrics import average_distance_person
 from hl.simulation.genome.genome import Genome
 
 
+JOINT_SPEED = 2
+
+
 class PersonObject:
     def __init__(
         self,
@@ -113,7 +116,7 @@ class PersonSimulation:
         t = self._steps_count
         if not self.dead:
             for joint_id, value in self.genome.step(t).items():
-                self.person.joints[joint_id].motorSpeed = value
+                self.person.joints[joint_id].motorSpeed = value * JOINT_SPEED
 
         self._steps_count += 1
         return False

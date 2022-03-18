@@ -5,11 +5,12 @@ from typing import Tuple, Union
 from colorsys import hsv_to_rgb
 from Box2D import b2Vec2
 import os
+from pathlib import Path
 
-ASSETS_PATH = "../assets/"
+ASSETS_PATH = os.path.join(Path(__file__).parent.parent, "assets")
+
 
 Color = Tuple[int, int, int, int]
-# Vec2 = Union[b2Vec2, Tuple[float, float]]
 Vec2 = Tuple[float, float]
 
 
@@ -35,7 +36,7 @@ def get_rgb_iris_index(index: int, max_index: int) -> Color:
     return colour
 
 
-def rotate(v: Vec2, a: float) -> Vec2:
+def rotate(v: b2Vec2, a: float) -> b2Vec2:
     if isinstance(v, tuple):
         v = b2Vec2(v)
 

@@ -18,7 +18,7 @@ from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 
 from hl.display.draw import draw_world
-from hl.utils import ASSETS_PATH, DEFAULT_BODY_PATH, get_rgb_iris_index
+from hl.utils import get_rgb_iris_index
 
 
 class Simulation:
