@@ -14,6 +14,7 @@ def parse_body(
     world: b2World,
     color: Color,
     angles: Optional[Dict[str, float]] = None,
+    root_angle: float = 0,
 ) -> Tuple[Dict[str, WorldObject], Dict[str, b2RevoluteJoint]]:
 
     col_mult = 0.7
@@ -31,6 +32,7 @@ def parse_body(
             vertices=[b2Vec2(v) / BODY_SCALE for v in part["vertices"]],
             world=world,
             color=color if part["color"] == 0 else second_color,
+            friction=0.8,
             categoryBits=0x0002,
             maskBits=0xFFFF & ~0x0002,
         )
@@ -63,7 +65,6 @@ def parse_body(
                     max = data["angle"]["max"]
                     jointDef.lowerAngle = deg2rad(min)
                     jointDef.upperAngle = deg2rad(max)
-                    # print(angles)
                     if angles is not None:
                         next_angle += angles[joint_id]
 
@@ -72,11 +73,11 @@ def parse_body(
                 init_part(
                     part_id=child_id,
                     pos=b2Vec2(pos)
-                    + rotate(jointDef.localAnchorA, angle)
-                    - rotate(jointDef.localAnchorB, next_angle),
+                    + rotate(jointDef.localAnchorA, deg2rad(angle))
+                    - rotate(jointDef.localAnchorB, deg2rad(next_angle)),
                     angle=next_angle,
                 )
 
-    init_part(body_def.root, body_def.pos, 0)
+    init_part(body_def.root, body_def.pos, root_angle)
 
     return objs, joints
