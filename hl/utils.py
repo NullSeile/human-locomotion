@@ -1,6 +1,5 @@
 import math
 
-# import pygame
 from typing import Tuple, Union
 from colorsys import hsv_to_rgb
 from Box2D import b2Vec2
@@ -8,13 +7,12 @@ import os
 from pathlib import Path
 
 ASSETS_PATH = os.path.join(Path(__file__).parent.parent, "assets")
+DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/lil_man.json")
 
 
 Color = Tuple[int, int, int, int]
 Vec2 = Tuple[float, float]
 
-
-DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/body1.json")
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
 def scale(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
@@ -37,9 +35,6 @@ def get_rgb_iris_index(index: int, max_index: int) -> Color:
 
 
 def rotate(v: b2Vec2, a: float) -> b2Vec2:
-    if isinstance(v, tuple):
-        v = b2Vec2(v)
-
     return b2Vec2(
         v.x * math.cos(a) - v.y * math.sin(a), v.x * math.sin(a) + v.y * math.cos(a)
     )
