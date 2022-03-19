@@ -23,6 +23,7 @@ class WorldObject:
         angle: float = 0,
         color: Color = (255, 255, 255, 255),
         dynamic: bool = True,
+        friction: float = 0.5,
         categoryBits: int = 0x0001,
         maskBits: int = 0xFFFF,
     ):
@@ -34,7 +35,7 @@ class WorldObject:
         self.fixture = b2FixtureDef(
             shape=self.shape,
             density=1,
-            friction=0.5,
+            friction=friction,
             categoryBits=categoryBits,
             maskBits=maskBits,
         )
