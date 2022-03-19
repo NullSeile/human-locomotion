@@ -1,5 +1,6 @@
 ####################### SELF IGNORES ###############################
 .vscode
+*.png
 
 ####################### PYTHON GENERIC #############################
 # Byte-compiled / optimized / DLL files
