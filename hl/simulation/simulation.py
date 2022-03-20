@@ -1,5 +1,6 @@
 # Global imports
 from multiprocessing.pool import AsyncResult
+import pickle
 from typing import Any, List, Optional, Tuple
 from Box2D import b2World
 
@@ -18,7 +19,7 @@ from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 
 from hl.display.draw import draw_world
-from hl.utils import get_rgb_iris_index
+from hl.utils import ASSETS_PATH, get_rgb_iris_index
 
 
 class Simulation:
@@ -55,6 +56,8 @@ class Simulation:
 
         self._fps = fps
         self.frames_per_step = frames_per_step
+
+        self.prev_best_score = 0.0
 
     def _create_world(self) -> Tuple[b2World, WorldObject]:
         world = b2World(gravity=(0, -9.8))
@@ -95,9 +98,10 @@ class Simulation:
         population = self._create_population_from_genomes(genomes, world)
 
         t = 0
+        clock = pygame.time.Clock()
         while not all([p.dead for p in population]):
             # Step in the world
-            world.Step(1 / self._fps, 2, 1)
+            world.Step(1 / self._fps, 6 * 10, 3 * 10)
 
             # If enough time has passed, update the population
             if t % self.frames_per_step == 0:
@@ -111,6 +115,7 @@ class Simulation:
             # Draw the world
             if self.screen_to_draw is not None and not self.parallel:
                 draw_world(self.screen_to_draw, population, floor)
+                clock.tick(self._fps)
 
             t += 1
 
@@ -148,11 +153,21 @@ class Simulation:
         """
         Breed the population.
         """
-        print("Max score:" + str(max(scores)))
+        print(f"score: avg={np.mean(scores):.5f}, max={max(scores):.5f}")
         distr: List[float] = list(np.array(scores) / sum(scores))
 
-        new_genomes: List[Genome] = []
-        for _ in tqdm(range(self.population_size), desc="Breeding  "):
+        best_index = np.argmax(scores)
+        best_score = scores[best_index]
+
+        if best_score > self.prev_best_score:
+            self.prev_best_score = best_score
+            with open(
+                os.path.join(ASSETS_PATH, f"checkpoints/{best_score:.4f}.nye"), "xb"
+            ) as file:
+                file.write(pickle.dumps(genomes[best_index]))
+
+        new_genomes: List[Genome] = [genomes[best_index]]
+        for _ in tqdm(range(self.population_size - 1), desc="Breeding  "):
             genome = self.genome_breeder.get_genome_from_breed(genomes, distr)
             new_genomes.append(genome)
 

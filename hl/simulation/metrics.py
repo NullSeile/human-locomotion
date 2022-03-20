@@ -1,10 +1,10 @@
 import numpy as np
 
 
-def average_distance_person(person) -> float:
-    avg_leg_x: float = np.average(
-        [person.person.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
+def average_distance_person(person_simulation) -> float:
+    return np.average(
+        [
+            person_simulation.person.parts[leg].body.position.x
+            for leg in ["leg_f", "leg_b"]
+        ]
     )
-    score = max(0, avg_leg_x) + 1  # + 2 * t / person.max_frames
-
-    return score**4

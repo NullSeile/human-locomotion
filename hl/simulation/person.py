@@ -1,5 +1,6 @@
 from typing import List, Dict
 from Box2D import b2World, b2Vec2
+import numpy as np
 
 from hl.io.body_def import BodyDef
 from hl.io.body_parser import parse_body
@@ -56,24 +57,61 @@ class PersonSimulation:
         self._steps_count = 0
 
         # Add some metrics
+        self.comulative_score = 0
         self.dead = False
         self.score = 0
         self.idle_score = 0
         self.idle_margin = 0.1
-        self.idle_max_score = 1
+        self.idle_max_score = 10
         # TODO: If the x position is not 0 in the body.json we may have problems
         self.idle_max_pos_x = 0
 
     def _calculate_dead_score(self) -> float:
-        return 1 * average_distance_person(self)
+
+        avg_leg_x = average_distance_person(self)
+
+        avg_leg_y = np.average(
+            [self.person.parts[leg].body.position.x for leg in ["leg_f", "leg_b"]]
+        )
+        body_delta = self.person.parts["head"].body.position.y - avg_leg_y
+
+        score = max(0, avg_leg_x + body_delta * 0.1 + self.comulative_score)
+
+        # floor_knee = [
+        #     self.person.parts[leg].body.transform
+        #     * self.person.parts[leg].shape.vertices[1]
+        #     for leg in ["leg_f", "leg_b"]
+        # ]
+        # knee = 0
+        # if any(floor_knee) < 0.01:
+        #     knee = 50
+
+        # tors_ang = self.person.parts["torso"].body.angle
+        # escoliosis = 0
+        # if tors_ang > np.pi / 4:
+        #     escoliosis = (tors_ang - np.pi / 4) * 100
+
+        # score = max(0, avg_leg_x - long_step - knee - escoliosis)
+
+        return score
 
     def _update_metrics(self):
         """
         Update the person's metrics.
         """
-        if self._steps_count > 30:
+
+        step = abs(
+            self.person.parts["leg_f"].body.position.x
+            - self.person.parts["leg_b"].body.position.x
+        )
+        step_threshold = 0.7
+        if step > step_threshold:
+            self.comulative_score -= (step - step_threshold) * 1
+
+        # if self._steps_count > 30:
+        if self._steps_count > 5:
             actual_pos_x = average_distance_person(self)
-            if actual_pos_x < self.idle_max_pos_x + self.idle_margin:
+            if actual_pos_x <= self.idle_max_pos_x + self.idle_margin:
                 self.idle_score += 0.1
             else:
                 self.idle_score = 0
