@@ -32,7 +32,7 @@ def parse_body(
             vertices=[b2Vec2(v) / BODY_SCALE for v in part["vertices"]],
             world=world,
             color=color if part["color"] == 0 else second_color,
-            friction=0.8,
+            friction=0.9,
             categoryBits=0x0002,
             maskBits=0xFFFF & ~0x0002,
         )
