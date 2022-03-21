@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from .array_genome import ArrayGenomeBreeder
 from .sine_genome import SineGenomeBreeder
 from .genome import GenomeBreeder
@@ -33,7 +34,7 @@ def get_genome_breeder(
     ValueError
         If the genome type is not supported.
     """
-    genome_params = {
+    genome_params: Dict[str, Any] = {
         "body_path": bodypath,
     }
 

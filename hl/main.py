@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
@@ -83,7 +84,9 @@ def get_arguments():
 if __name__ == "__main__":
     args = get_arguments()
 
-    GUI_controller = GUI_Controller() if args.display else None
+    GUI_controller: Optional[GUI_Controller] = (
+        GUI_Controller() if args.display else None
+    )
 
     actions_per_second = 5
     genome_breeder = get_genome_breeder(
@@ -103,10 +106,11 @@ if __name__ == "__main__":
     )
     if not args.syncronous:
         print("Starting simulation with async display")
-        data_queue = mp.Queue()
+        data_queue: mp.Queue = mp.Queue()
         simulation_process = mp.Process(target=simulation.run, args=(data_queue,))
         simulation_process.start()
         if args.display:
+            assert isinstance(GUI_controller, GUI_Controller)
             GUI_controller.set_async_params(simulation, data_queue, quit_flag)
             while check_thread_alive(simulation_process) and not quit_flag.is_set():
                 GUI_controller.display_async()

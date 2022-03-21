@@ -1,6 +1,6 @@
 # Global imports
 from multiprocessing.pool import AsyncResult
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from Box2D import b2World
 
 import os
@@ -12,6 +12,7 @@ import numpy as np
 from tqdm import tqdm
 import threading
 import multiprocessing as mp
+from multiprocessing.synchronize import Event
 
 # Our imports
 from hl.simulation.genome.genome import Genome, GenomeBreeder
@@ -88,11 +89,11 @@ import time
 
 
 class SimulationQueuePutter(threading.Thread):
-    def __init__(self, queue: mp.Queue, quit_flag: mp.Event):
+    def __init__(self, queue: mp.Queue, quit_flag: Event):
         super().__init__()
         self.queue = queue
         self.quit_flag = quit_flag
-        self.data = None
+        self.data: Optional[Tuple[int, List[Genome], List[float]]] = None
 
     def run(self):
         while not self.quit_flag.is_set():
@@ -125,7 +126,7 @@ class Simulation:
         parallel: bool = True,
         n_processes: int = 4,
         elite_genomes: int = 4,
-        quit_flag: Optional[mp.Event] = None,
+        quit_flag: Optional[Event] = None,
     ):
         self.genome_breeder = genome_breeder
         self.elite_genomes = elite_genomes
@@ -204,7 +205,7 @@ class Simulation:
 
     def _run_generation(self, genomes: List[Genome]) -> List[float]:
         return run_a_generation(
-            self.genome_factory,
+            self.genome_breeder,
             genomes,
             self._fps,
             self.frames_per_step,
@@ -286,6 +287,8 @@ class Simulation:
     def forced_quit(self) -> bool:
         if self.quit_flag is not None:
             return self.quit_flag.is_set()
+
+        raise ValueError("Quit flag is not set but called `forced_quit`")
 
     def run(
         self,
