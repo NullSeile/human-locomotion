@@ -7,7 +7,7 @@ GENOME_CHOICES = ["sine", "s", "array", "a"]
 
 
 def get_genome_breeder(
-    genome_type: str, bodypath: str, loop_time: int = 30, actions_per_second: int = 1
+    genome_type: str, bodypath: str, loop_time: int = 3, actions_per_second: int = 5
 ) -> GenomeBreeder:
     """
     Returns a GenomeBreeder object for the given genome type.

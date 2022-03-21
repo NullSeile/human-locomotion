@@ -10,8 +10,6 @@ import multiprocessing as mp
 import numpy as np
 
 from hl.simulation.genome import get_genome_breeder, GENOME_CHOICES
-from hl.simulation.genome.sine_genome import SineGenomeBreeder
-from hl.simulation.genome.array_genome import ArrayGenomeBreeder
 from hl.simulation.simulation import Simulation
 from hl.utils import DEFAULT_BODY_PATH
 
@@ -91,17 +89,10 @@ if __name__ == "__main__":
         screen = pygame.display.set_mode((width, height))
         GUI_controller = GUI_Controller(screen)
 
-    loop_time = 3
-    actions_per_sec = 5
-
     genome_breeder = get_genome_breeder(
-        args.genome, args.bodypath, loop_time, actions_per_second=actions_per_sec
+        args.genome, args.bodypath
     )
-    # genome_breeder = ArrayGenomeBreeder(
-    #     body_path=args.bodypath,
-    #     number_actions_loop=loop_time * actions_per_sec,
-    #     random_mutation_occurence=0.5,
-    # )
+
     quit_flag = mp.Event()
     simulation = Simulation(
         genome_breeder,
