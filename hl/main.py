@@ -89,14 +89,15 @@ if __name__ == "__main__":
         screen = pygame.display.set_mode((width, height))
         GUI_controller = GUI_Controller(screen)
 
+    actions_per_second = 5
     genome_breeder = get_genome_breeder(
-        args.genome, args.bodypath
+        args.genome, args.bodypath, actions_per_second=actions_per_second
     )
 
     quit_flag = mp.Event()
     simulation = Simulation(
         genome_breeder,
-        frames_per_step=actions_per_sec,
+        frames_per_step=actions_per_second,
         fps=30,
         display_manager=GUI_controller if args.syncronous else None,
         parallel=args.n_processes > 1 and not args.syncronous,
