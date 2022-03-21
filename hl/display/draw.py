@@ -2,11 +2,9 @@ import os
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
-import sys
 
 import pygame
 from pygame import gfxdraw
-from pygame.locals import QUIT  # type: ignore
 
 from hl.simulation.world_object import WorldObject
 from hl.simulation.person import PersonObject
@@ -53,17 +51,7 @@ def draw_person(
 
 
 def draw_world(screen, people, floor):
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
-
-    screen.fill((0, 0, 0))
-
     for p in people:
         draw_person(p.person, screen, (2, 2), 2)
 
     draw_object(floor, screen, (2, 2), 2)
-
-    pygame.display.flip()
-    pygame.display.update()
