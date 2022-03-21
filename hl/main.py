@@ -82,12 +82,8 @@ def get_arguments():
 
 if __name__ == "__main__":
     args = get_arguments()
-    GUI_controller = None
-    if args.display:
-        width = 900
-        height = 600
-        screen = pygame.display.set_mode((width, height))
-        GUI_controller = GUI_Controller(screen)
+
+    GUI_controller = GUI_Controller() if args.display else None
 
     actions_per_second = 5
     genome_breeder = get_genome_breeder(

@@ -10,8 +10,13 @@ from hl.display.draw import draw_world
 
 
 class GUI_Controller:
-    def __init__(self, screen: pygame.Surface):
-        self.screen = screen
+    def __init__(
+        self,
+        width=900,
+        height=600,
+    ):
+        self.screen = pygame.display.set_mode((width, height))
+
         self.data_queue = None
         self.quit_flag = None
         self.simulation = None
