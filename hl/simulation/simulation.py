@@ -35,12 +35,12 @@ def create_a_world() -> Tuple[b2World, WorldObject]:
 
 
 def create_a_population(
-    genome_factory: GenomeFactory, genomes: List[Genome], world: b2World
+    genome_factory: GenomeBreeder, genomes: List[Genome], world: b2World
 ) -> List[PersonSimulation]:
     population: List[PersonSimulation] = []
     for i, genome in enumerate(genomes):
         person = PersonSimulation(
-            genome_factory.body_path,
+            genome_factory.body_def,
             genome,
             world,
             get_rgb_iris_index(i, len(genomes)),
@@ -51,7 +51,7 @@ def create_a_population(
 
 
 def run_a_generation(
-    genome_factory: GenomeFactory,
+    genome_factory: GenomeBreeder,
     genomes: List[Genome],
     fps: int,
     frames_per_step: int,
@@ -227,7 +227,7 @@ class Simulation:
                 pool.apply_async(
                     run_a_generation,
                     args=[
-                        self.genome_factory,
+                        self.genome_breeder,
                         genomes[sli],
                         self._fps,
                         self.parallel,

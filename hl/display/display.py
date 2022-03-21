@@ -100,7 +100,7 @@ def display_async(
     else:
         selected_genomes = last_genomes[:N_ELEMENTS]
     run_a_generation(
-        display.simulation.genome_factory,
+        display.simulation.genome_breeder,
         selected_genomes,
         display.simulation._fps,
         display.simulation.frames_per_step,

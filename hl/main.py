@@ -9,7 +9,7 @@ import time
 import multiprocessing as mp
 import numpy as np
 
-
+from hl.simulation.genome import get_genome_breeder, GENOME_CHOICES
 from hl.simulation.genome.sine_genome import SineGenomeBreeder
 from hl.simulation.genome.array_genome import ArrayGenomeBreeder
 from hl.simulation.simulation import Simulation
@@ -27,7 +27,7 @@ def check_thread_alive(thr):
     return thr.is_alive()
 
 
-if __name__ == "__main__":
+def get_arguments():
     parser = argparse.ArgumentParser(
         description="Genetic simulation for bipedal walkers."
     )
@@ -69,9 +69,21 @@ if __name__ == "__main__":
             " simulation"
         ),
     )
+    parser.add_argument(
+        "-g",
+        "--genome",
+        type=str,
+        default="sine",
+        choices=GENOME_CHOICES,
+        help="The genome to use for the simulation.",
+    )
 
     args = parser.parse_args()
+    return args
 
+
+if __name__ == "__main__":
+    args = get_arguments()
     GUI_controller = None
     if args.display:
         width = 900
@@ -81,11 +93,15 @@ if __name__ == "__main__":
 
     loop_time = 3
     actions_per_sec = 5
-    genome_breeder = ArrayGenomeBreeder(
-        body_path=args.bodypath,
-        number_actions_loop=loop_time * actions_per_sec,
-        random_mutation_occurence=0.5,
+
+    genome_breeder = get_genome_breeder(
+        args.genome, args.bodypath, loop_time, actions_per_second=actions_per_sec
     )
+    # genome_breeder = ArrayGenomeBreeder(
+    #     body_path=args.bodypath,
+    #     number_actions_loop=loop_time * actions_per_sec,
+    #     random_mutation_occurence=0.5,
+    # )
     quit_flag = mp.Event()
     simulation = Simulation(
         genome_breeder,
