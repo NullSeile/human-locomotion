@@ -56,7 +56,7 @@ def run_a_generation(
     fps: int,
     frames_per_step: int,
     parallel: Optional[bool] = True,
-    screen_to_draw: Optional[pygame.surface.Surface] = None,
+    display_manager=None,
 ) -> List[float]:
     world, floor = create_a_world()
     population = create_a_population(genome_factory, genomes, world)
@@ -76,8 +76,8 @@ def run_a_generation(
             person.update_status()
 
         # Draw the world
-        if screen_to_draw is not None and not parallel:
-            draw_world(screen_to_draw, population, floor)
+        if display_manager is not None and not parallel:
+            display_manager.draw_world(population, floor)
 
         t += 1
 
@@ -88,13 +88,14 @@ import time
 
 
 class SimulationQueuePutter(threading.Thread):
-    def __init__(self, queue: mp.Queue):
+    def __init__(self, queue: mp.Queue, quit_flag: mp.Event):
         super().__init__()
         self.queue = queue
+        self.quit_flag = quit_flag
         self.data = None
 
     def run(self):
-        while True:
+        while not self.quit_flag.is_set():
             if self.data is not None:
                 while not self.queue.empty():
                     self.queue.get()
@@ -118,11 +119,13 @@ class Simulation:
         frames_per_step: int = 5,
         population_size: int = 64,
         # Drawing
-        screen_to_draw: Optional[pygame.surface.Surface] = None,
+        # screen_to_draw: Optional[pygame.surface.Surface] = None,
+        display_manager=None,
         # Parallel parameters
         parallel: bool = True,
         n_processes: int = 4,
         elite_genomes: int = 4,
+        quit_flag: Optional[mp.Event] = None,
     ):
         self.genome_factory = genome_factory
         self.elite_genomes = elite_genomes
@@ -138,10 +141,11 @@ class Simulation:
                     " the number of processes."
                 )
 
-            if screen_to_draw is not None:
+            if display_manager is not None:
                 raise ValueError("Drawing is not supported yet in parallel simulation")
 
-        self.screen_to_draw = screen_to_draw
+        # self.screen_to_draw = screen_to_draw
+        self.display_manager = display_manager
         self.generation_count = -1
 
         self._fps = fps
@@ -155,9 +159,10 @@ class Simulation:
         self.population_queue_manager = None
         self._last_genomes = None
         self._last_genomes_generation = self.generation_count
+        self.quit_flag = quit_flag
 
-    def add_population_queue(self, queue: mp.Queue) -> None:
-        self.population_queue_manager = SimulationQueuePutter(queue)
+    def add_parallel_params(self, queue: mp.Queue) -> None:
+        self.population_queue_manager = SimulationQueuePutter(queue, self.quit_flag)
         threading.Thread(target=self.population_queue_manager.run).start()
 
     def add_last_genomes(
@@ -167,35 +172,10 @@ class Simulation:
         Add the last generation of genomes to the simulation. This
         method is thread-safe.
         """
-        # Save lock for parallel simulation
-        # if self.parallel and self.population_lock is None:
-        #     raise (
-        #         ValueError("If parallel simulation is enabled, a lock must be provided")
-        #     )
-        # timeout = 0.00001 if skip_if_blocked else None
-        # try:
-        # print("AQUIRING LOCK")
-        # self.population_lock.acquire(timeout=timeout)
-        # self._last_genomes = genomes
-        # self._last_genomes_scores = scores
-        # self._last_genomes_generation = self.generation_count
-        self.population_queue_manager.add_last_genomes(
-            self.generation_count, genomes, scores
-        )
-
-        # print("RELEASING LOCK")
-        # self.population_lock.release()
-        # except Exception as e:
-        #     print("FAILED TO AQUIRE:", e)
-        #     return
-
-    # def obtain_last_genomes(self) -> List[Genome]:
-    #     # with self.population_lock:
-    #     last_genomes, last_genomes_gen = (
-    #         self._last_genomes,
-    #         self._last_genomes_generation,
-    #     )
-    #     return last_genomes, last_genomes_gen
+        if self.population_queue_manager is not None:
+            self.population_queue_manager.add_last_genomes(
+                self.generation_count, genomes, scores
+            )
 
     def _create_world(self) -> Tuple[b2World, WorldObject]:
         return create_a_world()
@@ -228,7 +208,7 @@ class Simulation:
             self._fps,
             self.frames_per_step,
             self.parallel,
-            self.screen_to_draw,
+            self.display_manager,
         )
 
     def _run_generation_parallel(self, genomes: List[Genome]) -> List[float]:
@@ -250,7 +230,7 @@ class Simulation:
                         genomes[sli],
                         self._fps,
                         self.parallel,
-                        self.screen_to_draw,
+                        self.display_manager,
                     ],
                 )
             )
@@ -281,9 +261,7 @@ class Simulation:
         # Select only best 40 genomes to breed
         s_gs = gs[:40]
         s_genomes = [e[0] for e in s_gs]
-        s_distr = list(
-            np.array([e[1] for e in s_gs]) / sum([e[1] for e in s_gs])
-        )
+        s_distr = list(np.array([e[1] for e in s_gs]) / sum([e[1] for e in s_gs]))
         for _ in tqdm(
             range(self.population_size - self.elite_genomes), desc="Breeding  "
         ):
@@ -317,21 +295,32 @@ class Simulation:
         #     else sum(self.scores) / len(self.scores) < threshold
         # )
 
-    def run(self, data_queue: Optional[mp.Queue] = None) -> None:
+    def forced_quit(self) -> bool:
+        if self.quit_flag is not None:
+            return self.quit_flag.is_set()
+
+    def run(
+        self,
+        data_queue: Optional[mp.Queue] = None,
+    ) -> None:
         # Init parameters
         if data_queue is not None:
-            self.add_population_queue(data_queue)
+            self.add_parallel_params(data_queue)
 
         # Start the simulation
         genomes = self._create_initial_genomes()
         self.add_last_genomes(genomes, None)
 
-        while not self.has_converged():
+        while not self.has_converged() and not self.forced_quit():
             self.generation_count += 1
             scores = (
                 self._run_generation_parallel(genomes)
                 if self.parallel
                 else self._run_generation(genomes)
             )
-            genomes = self._breed(genomes, scores)
             self.add_last_genomes(genomes, scores)
+            if self.forced_quit():
+                break
+            genomes = self._breed(genomes, scores)
+        if self.quit_flag is not None:
+            self.quit_flag.set()

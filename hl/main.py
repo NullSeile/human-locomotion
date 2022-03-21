@@ -9,44 +9,15 @@ import time
 import multiprocessing as mp
 import numpy as np
 
-from simulation.genome import GenomeFactory
-from simulation.simulation import Simulation
+from hl.simulation.genome import GenomeFactory
+from hl.simulation.simulation import Simulation
 from hl.utils import DEFAULT_BODY_PATH
-from hl.display.draw import draw_world
+
+# from hl.display.draw import draw_world
+from hl.display.display import GUI_Controller
 
 from hl.simulation.simulation import run_a_generation
 import random
-
-
-def display_async(simulation: Simulation, screen: pygame.Surface, data_queue: mp.Queue):
-    N_ELEMENTS = 16
-    # world, floor = create_a_world()
-    # last_genomes, last_genomes_gen = simulation.obtain_last_genomes()
-    if data_queue.empty():
-        return
-    generation, last_genomes, last_scores = data_queue.get()
-
-    if last_genomes is None:
-        print("No genomes to display yet")
-        return
-    if last_scores is not None:
-        gs = list(zip(last_genomes, last_scores))
-        gs = sorted(gs, key=lambda x: x[1], reverse=True)
-        idx = np.round(np.linspace(0, len(gs) - 1, N_ELEMENTS)).astype(int)
-        selected_genomes = [gs[i][0] for i in idx]
-        # print("Selected idx and its score", idx, [gs[i][1] for i in idx])
-    else:
-        selected_genomes = last_genomes[:N_ELEMENTS]
-    print("Displaying generation {}".format(generation))
-    run_a_generation(
-        simulation.genome_factory,
-        selected_genomes,
-        simulation._fps,
-        simulation.frames_per_step,
-        False,
-        screen,
-    )
-    # pygame.display.flip()
 
 
 def check_thread_alive(thr):
@@ -76,7 +47,7 @@ if __name__ == "__main__":
         "--n_processes",
         "--n_threads",
         type=int,
-        default=8,
+        default=mp.cpu_count(),
         help="Number of processes to use for parallel simulation.",
     )
     parser.add_argument(
@@ -85,14 +56,26 @@ if __name__ == "__main__":
         action="store_true",
         help="Whether or not display the simulation.",
     )
+    parser.add_argument(
+        "-s",
+        "--syncronous",
+        action="store_true",
+        help=(
+            "Whether or not run the program the simulation synchronously. If set to"
+            " true, only one process will be used for the simulation, this includes the"
+            " display. If '--display' is set, the display will be sent to the"
+            " simulation"
+        ),
+    )
 
     args = parser.parse_args()
 
-    screen = None
+    GUI_controller = None
     if args.display:
         width = 900
         height = 600
         screen = pygame.display.set_mode((width, height))
+        GUI_controller = GUI_Controller(screen)
 
     loop_time = 3
     actions_per_sec = 5
@@ -100,26 +83,33 @@ if __name__ == "__main__":
         bodypath=args.bodypath,
         number_actions_loop=loop_time * actions_per_sec,
     )
+    quit_flag = mp.Event()
     simulation = Simulation(
         genome_factory,
         frames_per_step=actions_per_sec,
         fps=30,
-        # screen_to_draw=screen,
-        parallel=args.n_processes > 1,
+        display_manager=GUI_controller if args.syncronous else None,
+        parallel=args.n_processes > 1 and not args.syncronous,
         population_size=args.population,
-        n_processes=args.n_processes,
+        n_processes=args.n_processes if not args.syncronous else 1,
+        quit_flag=quit_flag,
     )
+    if not args.syncronous:
+        print("Starting simulation with async display")
+        data_queue = mp.Queue()
+        simulation_process = mp.Process(target=simulation.run, args=(data_queue,))
+        simulation_process.start()
+        if args.display:
+            GUI_controller.set_async_params(simulation, data_queue, quit_flag)
+            while check_thread_alive(simulation_process) and not quit_flag.is_set():
+                GUI_controller.display_async()
+                time.sleep(0.1)
+        if quit_flag.is_set():
+            print("Exitting due key press")
+        else:
+            quit_flag.set()
+        simulation_process.join()  # Wait for the simulation to finish before continuing
 
-    data_queue = mp.Queue()
-    # population_lock = threading.Lock()
-    # simulation.add_population_lock(population_lock)
-    # simulation.add_population_queue(data_queue)
-    # simulation_thread = threading.Thread(target=simulation.run)
-    simulation_process = mp.Process(target=simulation.run, args=(data_queue,))
-    simulation_process.start()
-    if args.display:
-        while check_thread_alive(simulation_process):
-            display_async(simulation, screen, data_queue)
-            time.sleep(0.1)
-    simulation_process.join()
+    else:
+        simulation.run()
     print("Finished")
