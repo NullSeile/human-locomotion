@@ -1,37 +1,45 @@
 import pygame
-from typing import Optional, List
+from typing import Callable, Optional, List
 import multiprocessing as mp
 import numpy as np
 import sys
+from multiprocessing.synchronize import Event
+import matplotlib.pyplot as plt
+from hl.io.body_def import BodyDef
+from hl.simulation.genome.genome import Genome
 
 from hl.simulation.simulation import run_a_generation
 from hl.simulation.person import PersonSimulation
 from hl.display.draw import draw_world
+from hl.simulation.world_object import WorldObject
 
 
 class GUI_Controller:
     def __init__(
         self,
-        width=900,
-        height=600,
+        body_def: BodyDef,
+        fps: int,
+        width: int = 900,
+        height: int = 600,
     ):
         self.screen = pygame.display.set_mode((width, height))
 
-        self.data_queue = None
-        self.quit_flag = None
-        self.simulation = None
+        self.fps = fps
+        self.body_def = body_def
+
+        self.data_queue: Optional[mp.Queue] = None
+        self.quit_flag: Optional[Event] = None
+
         pygame.font.init()
         self.font = pygame.font.SysFont("Comic Sans MS", 60)
 
-        self.last_generation = None
-        self.last_genomes = None
-        self.last_scores = None
+        self.last_generation: int = 0
+        self.last_genomes: Optional[List[Genome]] = None
+        self.last_scores: Optional[List[float]] = None
 
-    def set_async_params(self, simulation, data_queue: mp.Queue, quit_flag: mp.Event):
+    def set_async_params(self, data_queue: mp.Queue, quit_flag: Event):
         self.data_queue = data_queue
         self.quit_flag = quit_flag
-        self.simulation = simulation
-        # self.display_async(simulation)
 
     def draw_world(self, population: List[PersonSimulation], floor):
         for event in pygame.event.get():
@@ -56,6 +64,14 @@ class GUI_Controller:
 
         pygame.display.flip()
         pygame.display.update()
+
+        plt.draw()
+        plt.pause(0.001)
+
+    def plot_graphs(self, scores: Optional[List[float]]):
+        if scores is not None:
+            plt.cla()
+            plt.hist(scores)
 
     def _refresh_last_data(self):
         if self.data_queue is None:
@@ -84,19 +100,29 @@ class GUI_Controller:
                 )
             )
         self._refresh_last_data()
-        display_async(self, self.last_generation, self.last_genomes, self.last_scores)
+        display_async(
+            self.body_def,
+            self.fps,
+            self.last_genomes,
+            self.last_scores,
+            draw_start=self.plot_graphs,
+            draw_loop=self.draw_world,
+        )
 
 
 def display_async(
-    display: GUI_Controller,
-    generation,
-    last_genomes,
-    last_scores,
+    body_def: BodyDef,
+    fps: int,
+    last_genomes: List[Genome],
+    last_scores: List[float],
+    draw_start: Optional[Callable[[Optional[List[float]]], None]] = None,
+    draw_loop: Optional[Callable[[List[PersonSimulation], WorldObject], None]] = None,
 ):
-    N_ELEMENTS = 16
-
     if last_genomes is None:
         return
+
+    N_ELEMENTS = 16
+
     if last_scores is not None:
         gs = list(zip(last_genomes, last_scores))
         gs = sorted(gs, key=lambda x: x[1], reverse=True)
@@ -104,11 +130,12 @@ def display_async(
         selected_genomes = [gs[i][0] for i in idx]
     else:
         selected_genomes = last_genomes[:N_ELEMENTS]
+
     run_a_generation(
-        display.simulation.genome_breeder,
+        body_def,
         selected_genomes,
-        display.simulation._fps,
-        display.simulation.frames_per_step,
-        False,
-        display,
+        fps,
+        draw_start,
+        draw_loop,
+        last_scores,
     )

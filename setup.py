@@ -26,6 +26,7 @@ setup(
         "pygame",
         "numpy",
         "pandas",
+        "matplotlib",
     ],
     license="LICENCE.txt",
     packages=find_packages(exclude=("tests", "docs", "bin", "assests")),

@@ -84,39 +84,30 @@ class PersonSimulation:
         is_idle = self.idle_score > self.idle_max_score
         return head_down or is_idle
 
-    def update_status(self):
+    def _update_status(self):
         """
         Updates the person's status and checks if it is dead. If it is,
         the person is removed from the world. If it is not dead, the
         person's score is updated.
         """
-        t = self._steps_count
         if not self.dead:
             if self._is_dead():
                 self.dead = True
                 self.score = self._calculate_dead_score()
                 self.person.destroy()
-                return True
+                return
+
             self._update_metrics()
 
-    def step(self) -> bool:
+    def step(self):
         """
-        Update the person's position
-
-        Parameters
-        ----------
-        world : b2World
-            The world in which the person is.
-
-        Returns
-        -------
-        bool
-            True if the person is dead, False otherwise.
+        Updates the person status and applyes a movement
         """
+        self._update_status()
+
         t = self._steps_count
         if not self.dead:
             for joint_id, value in self.genome.step(t).items():
                 self.person.joints[joint_id].motorSpeed = value * JOINT_SPEED
 
         self._steps_count += 1
-        return False

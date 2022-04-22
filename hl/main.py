@@ -3,22 +3,15 @@ from typing import Optional
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
-import pygame
 import argparse
-import threading
 import time
 import multiprocessing as mp
-import numpy as np
 
 from hl.simulation.genome import get_genome_breeder, GENOME_CHOICES
 from hl.simulation.simulation import Simulation
 from hl.utils import DEFAULT_BODY_PATH
 
-# from hl.display.draw import draw_world
 from hl.display.display import GUI_Controller
-
-from hl.simulation.simulation import run_a_generation
-import random
 
 
 def check_thread_alive(thr):
@@ -84,21 +77,17 @@ def get_arguments():
 if __name__ == "__main__":
     args = get_arguments()
 
-    GUI_controller: Optional[GUI_Controller] = (
-        GUI_Controller() if args.display else None
-    )
+    fps = 30
+    genome_breeder = get_genome_breeder(args.genome, args.bodypath)
 
-    actions_per_second = 5
-    genome_breeder = get_genome_breeder(
-        args.genome, args.bodypath, actions_per_second=actions_per_second
+    GUI_controller: Optional[GUI_Controller] = (
+        GUI_Controller(genome_breeder.body_def, fps) if args.display else None
     )
 
     quit_flag = mp.Event()
     simulation = Simulation(
         genome_breeder,
-        frames_per_step=actions_per_second,
-        fps=30,
-        display_manager=GUI_controller if args.syncronous else None,
+        fps=fps,
         parallel=args.n_processes > 1 and not args.syncronous,
         population_size=args.population,
         n_processes=args.n_processes if not args.syncronous else 1,
@@ -111,7 +100,7 @@ if __name__ == "__main__":
         simulation_process.start()
         if args.display:
             assert isinstance(GUI_controller, GUI_Controller)
-            GUI_controller.set_async_params(simulation, data_queue, quit_flag)
+            GUI_controller.set_async_params(data_queue, quit_flag)
             while check_thread_alive(simulation_process) and not quit_flag.is_set():
                 GUI_controller.display_async()
                 time.sleep(0.1)
