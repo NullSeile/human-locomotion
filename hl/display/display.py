@@ -1,5 +1,5 @@
 import pygame
-from typing import Callable, Optional, List
+from typing import Callable, Dict, Optional, List
 import multiprocessing as mp
 import numpy as np
 import sys
@@ -31,11 +31,14 @@ class GUI_Controller:
         self.quit_flag: Optional[Event] = None
 
         pygame.font.init()
-        self.font = pygame.font.SysFont("Comic Sans MS", 60)
+        self.font = pygame.font.SysFont("Comic Sans MS", 50)
 
         self.last_generation: int = 0
         self.last_genomes: Optional[List[Genome]] = None
         self.last_scores: Optional[List[float]] = None
+
+        self.avg_history: Dict[int, float] = dict()
+        self.max_history: Dict[int, float] = dict()
 
     def set_async_params(self, data_queue: mp.Queue, quit_flag: Event):
         self.data_queue = data_queue
@@ -56,7 +59,7 @@ class GUI_Controller:
 
         self.screen.fill((0, 0, 0))
         textsurface = self.font.render(
-            f"Displaying Generation: {self.last_generation}", False, (255, 255, 255)
+            f"Displaying Generation: {self.last_generation}", True, (255, 255, 255)
         )
         self.screen.blit(textsurface, (0, -2))
 
@@ -68,10 +71,19 @@ class GUI_Controller:
         plt.draw()
         plt.pause(0.001)
 
-    def plot_graphs(self, scores: Optional[List[float]]):
+    def plot_graphs(self, scores: Optional[List[float]], generation: int):
         if scores is not None:
+            self.avg_history[generation] = np.mean(scores)
+            self.max_history[generation] = np.max(scores)
+
             plt.cla()
+
             plt.hist(scores)
+            plt.plot(self.avg_history.keys(), self.avg_history.values(), label="avg")
+            plt.plot(self.max_history.keys(), self.max_history.values(), label="max")
+            plt.legend()
+
+            plt.tight_layout()
 
     def _refresh_last_data(self):
         if self.data_queue is None:
@@ -105,6 +117,7 @@ class GUI_Controller:
             self.fps,
             self.last_genomes,
             self.last_scores,
+            self.last_generation,
             draw_start=self.plot_graphs,
             draw_loop=self.draw_world,
         )
@@ -115,7 +128,8 @@ def display_async(
     fps: int,
     last_genomes: List[Genome],
     last_scores: List[float],
-    draw_start: Optional[Callable[[Optional[List[float]]], None]] = None,
+    generation: int,
+    draw_start: Optional[Callable[[Optional[List[float]], int], None]] = None,
     draw_loop: Optional[Callable[[List[PersonSimulation], WorldObject], None]] = None,
 ):
     if last_genomes is None:
@@ -135,6 +149,7 @@ def display_async(
         body_def,
         selected_genomes,
         fps,
+        generation,
         draw_start,
         draw_loop,
         last_scores,

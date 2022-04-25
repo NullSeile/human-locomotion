@@ -1,9 +1,8 @@
 # Global imports
-from ast import Call
 from multiprocessing.pool import AsyncResult
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from Box2D import b2World
-import matplotlib.pyplot as plt
+import pickle
 
 import os
 
@@ -22,7 +21,7 @@ from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 from hl.io.body_def import BodyDef
 
-from hl.utils import get_rgb_iris_index
+from hl.utils import get_rgb_iris_index, ASSETS_PATH
 
 
 def create_a_world() -> Tuple[b2World, WorldObject]:
@@ -57,7 +56,8 @@ def run_a_generation(
     body_def: BodyDef,
     genomes: List[Genome],
     fps: int,
-    draw_start: Optional[Callable[[Optional[List[float]]], None]] = None,
+    generation: int,
+    draw_start: Optional[Callable[[Optional[List[float]], int], None]] = None,
     draw_loop: Optional[Callable[[List[PersonSimulation], WorldObject], None]] = None,
     scores: Optional[List[float]] = None,
 ) -> List[float]:
@@ -65,13 +65,13 @@ def run_a_generation(
     population = create_a_population(body_def, genomes, world)
 
     if draw_start is not None:
-        draw_start(scores)
+        draw_start(scores, generation)
 
     t = 0
     clock = pygame.time.Clock()
     while not all([p.dead for p in population]):
         # Step in the world
-        world.Step(1 / fps, 2, 1)
+        world.Step(1 / fps, 6 * 10, 3 * 10)
 
         # If enough time has passed, update the population
         for person in population:
@@ -154,6 +154,8 @@ class Simulation:
 
         self.generation_count = 0
 
+        self.prev_best_score = 0.0
+
         self._fps = fps
         self.frames_per_step = frames_per_step
         self.population_queue_manager: Optional[SimulationQueuePutter] = None
@@ -205,9 +207,10 @@ class Simulation:
 
     def _run_generation(self, genomes: List[Genome]) -> List[float]:
         return run_a_generation(
-            self.genome_breeder,
+            self.genome_breeder.body_def,
             genomes,
             self._fps,
+            self.generation_count,
             self.draw_start,
             self.draw_loop,
         )
@@ -230,6 +233,7 @@ class Simulation:
                         self.genome_breeder.body_def,
                         genomes[sli],
                         self._fps,
+                        self.generation_count,
                     ],
                 )
             )
@@ -253,6 +257,19 @@ class Simulation:
         gs = list(zip(genomes, scores))
         gs = sorted(gs, key=lambda x: x[1], reverse=True)
         elite_genomes = gs[: self.elite_genomes]
+
+        best_index = np.argmax(scores)
+        best_score = scores[best_index]
+        if best_score > self.prev_best_score:
+            self.prev_best_score = best_score
+            with open(
+                os.path.join(
+                    ASSETS_PATH,
+                    f"checkpoints/gen={self.generation_count}_score={best_score:.4f}.nye",
+                ),
+                "xb",
+            ) as file:
+                file.write(pickle.dumps(genomes[best_index]))
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
 

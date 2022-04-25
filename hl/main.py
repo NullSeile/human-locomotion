@@ -98,6 +98,7 @@ if __name__ == "__main__":
         data_queue: mp.Queue = mp.Queue()
         simulation_process = mp.Process(target=simulation.run, args=(data_queue,))
         simulation_process.start()
+
         if args.display:
             assert isinstance(GUI_controller, GUI_Controller)
             GUI_controller.set_async_params(data_queue, quit_flag)
@@ -108,6 +109,7 @@ if __name__ == "__main__":
             print("Exitting due key press")
         else:
             quit_flag.set()
+
         simulation_process.join()  # Wait for the simulation to finish before continuing
 
     else:
