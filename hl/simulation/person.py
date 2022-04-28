@@ -4,7 +4,7 @@ from Box2D import b2World, b2Vec2
 from hl.io.body_def import BodyDef
 from hl.io.body_parser import parse_body
 from hl.utils import Vec2, Color
-from hl.simulation.metrics import average_distance_person
+from hl.simulation.metrics import average_leg_x
 from hl.simulation.genome.genome import Genome
 
 
@@ -60,24 +60,24 @@ class PersonSimulation:
         self.score = 0
         self.idle_score = 0
         self.idle_margin = 0.1
-        self.idle_max_score = 1
+        self.idle_max_score = 5
         # TODO: If the x position is not 0 in the body.json we may have problems
         self.idle_max_pos_x = 0
-
-    def _calculate_dead_score(self) -> float:
-        return 1 * average_distance_person(self)
 
     def _update_metrics(self):
         """
         Update the person's metrics.
         """
         if self._steps_count > 30:
-            actual_pos_x = average_distance_person(self)
+            actual_pos_x = average_leg_x(self)
             if actual_pos_x < self.idle_max_pos_x + self.idle_margin:
                 self.idle_score += 0.1
             else:
                 self.idle_score = 0
                 self.idle_max_pos_x = actual_pos_x
+
+    def _calculate_dead_score(self) -> float:
+        return max(0, average_leg_x(self))
 
     def _is_dead(self) -> bool:
         head_down = self.person.parts["head"].body.position.y < 0.7

@@ -44,7 +44,7 @@ class GUI_Controller:
         self.data_queue = data_queue
         self.quit_flag = quit_flag
 
-    def draw_world(self, population: List[PersonSimulation], floor):
+    def draw_loop(self, population: List[PersonSimulation], floor):
         for event in pygame.event.get():
             if (
                 event.type == pygame.QUIT
@@ -71,14 +71,14 @@ class GUI_Controller:
         plt.draw()
         plt.pause(0.001)
 
-    def plot_graphs(self, scores: Optional[List[float]], generation: int):
+    def draw_start(self, scores: Optional[List[float]], generation: int):
         if scores is not None:
             self.avg_history[generation] = np.mean(scores)
             self.max_history[generation] = np.max(scores)
 
             plt.cla()
 
-            plt.hist(scores)
+            # plt.hist(scores)
             plt.plot(self.avg_history.keys(), self.avg_history.values(), label="avg")
             plt.plot(self.max_history.keys(), self.max_history.values(), label="max")
             plt.legend()
@@ -118,8 +118,8 @@ class GUI_Controller:
             self.last_genomes,
             self.last_scores,
             self.last_generation,
-            draw_start=self.plot_graphs,
-            draw_loop=self.draw_world,
+            draw_start=self.draw_start,
+            draw_loop=self.draw_loop,
         )
 
 

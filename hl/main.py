@@ -1,6 +1,8 @@
 import os
 from typing import Optional
 
+from hl.simulation.genome.sine_genome import SineGenomeBreeder
+
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 
 import argparse
@@ -9,7 +11,7 @@ import multiprocessing as mp
 
 from hl.simulation.genome import get_genome_breeder, GENOME_CHOICES
 from hl.simulation.simulation import Simulation
-from hl.utils import DEFAULT_BODY_PATH
+from hl.utils import DEFAULT_BODY_PATH, load_class_from_file
 
 from hl.display.display import GUI_Controller
 
@@ -61,13 +63,16 @@ def get_arguments():
             " simulation"
         ),
     )
+    # parser.add_argument(
+    #     "-g",
+    #     "--genome",
+    #     type=str,
+    #     default="sine",
+    #     choices=GENOME_CHOICES,
+    #     help="The genome to use for the simulation.",
+    # )
     parser.add_argument(
-        "-g",
-        "--genome",
-        type=str,
-        default="sine",
-        choices=GENOME_CHOICES,
-        help="The genome to use for the simulation.",
+        "--sample", "-sg", type=str, help="Choose a genome save to begin the training"
     )
 
     args = parser.parse_args()
@@ -78,7 +83,10 @@ if __name__ == "__main__":
     args = get_arguments()
 
     fps = 30
-    genome_breeder = get_genome_breeder(args.genome, args.bodypath)
+    # genome_breeder = get_genome_breeder(args.genome, args.bodypath)
+    genome_breeder = SineGenomeBreeder(args.bodypath)
+
+    sample_genome = load_class_from_file(args.sample) if args.sample else None
 
     GUI_controller: Optional[GUI_Controller] = (
         GUI_Controller(genome_breeder.body_def, fps) if args.display else None
@@ -87,6 +95,7 @@ if __name__ == "__main__":
     quit_flag = mp.Event()
     simulation = Simulation(
         genome_breeder,
+        sample_genome=sample_genome,
         fps=fps,
         parallel=args.n_processes > 1 and not args.syncronous,
         population_size=args.population,

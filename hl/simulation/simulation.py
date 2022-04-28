@@ -117,6 +117,7 @@ class Simulation:
         self,
         # Genome params
         genome_breeder: GenomeBreeder,
+        sample_genome: Optional[Genome] = None,
         # Simulation params
         fps: int = 30,
         frames_per_step: int = 5,
@@ -124,7 +125,7 @@ class Simulation:
         # Parallel parameters
         parallel: bool = True,
         n_processes: int = 4,
-        elite_genomes: int = 4,
+        n_elite_genomes: int = 4,
         quit_flag: Optional[Event] = None,
         # Drawing
         draw_start: Optional[Callable] = None,
@@ -133,7 +134,9 @@ class Simulation:
         ] = None,
     ):
         self.genome_breeder = genome_breeder
-        self.elite_genomes = elite_genomes
+        self.n_elite_genomes = n_elite_genomes
+
+        self.sample_genome = sample_genome
 
         self.parallel = parallel
         self.population_size = population_size
@@ -159,7 +162,7 @@ class Simulation:
         self._fps = fps
         self.frames_per_step = frames_per_step
         self.population_queue_manager: Optional[SimulationQueuePutter] = None
-        self._last_genomes = None
+        self._last_genomes: Optional[List[Genome]] = None
         self._last_genomes_generation = self.generation_count
         self.quit_flag = quit_flag
 
@@ -184,11 +187,13 @@ class Simulation:
         return create_a_world()
 
     def _create_initial_genomes(self) -> List[Genome]:
-        genomes: List[Genome] = []
-        for i in range(self.population_size):
-            genomes.append(self.genome_breeder.get_random_genome())
-
-        return genomes
+        if self.sample_genome is not None:
+            return [self.sample_genome] * self.population_size
+        else:
+            return [
+                self.genome_breeder.get_random_genome()
+                for _ in range(self.population_size)
+            ]
 
     def _create_population_from_genomes(
         self, genomes: List[Genome], world: b2World
@@ -256,7 +261,7 @@ class Simulation:
         # Selecting the best genomes to keep for the next generation
         gs = list(zip(genomes, scores))
         gs = sorted(gs, key=lambda x: x[1], reverse=True)
-        elite_genomes = gs[: self.elite_genomes]
+        elite_genomes = gs[: self.n_elite_genomes]
 
         best_index = np.argmax(scores)
         best_score = scores[best_index]
@@ -279,7 +284,7 @@ class Simulation:
         s_genomes = [e[0] for e in s_gs]
         s_distr = list(np.array([e[1] for e in s_gs]) / sum([e[1] for e in s_gs]))
         for _ in tqdm(
-            range(self.population_size - self.elite_genomes), desc="Breeding  "
+            range(self.population_size - self.n_elite_genomes), desc="Breeding  "
         ):
             genome = self.genome_breeder.get_genome_from_breed(s_genomes, s_distr)
             new_genomes.append(genome)

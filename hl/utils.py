@@ -1,4 +1,5 @@
 import math
+import pickle
 
 from typing import Tuple, Union
 from colorsys import hsv_to_rgb
@@ -38,3 +39,7 @@ def rotate(v: b2Vec2, a: float) -> b2Vec2:
     return b2Vec2(
         v.x * math.cos(a) - v.y * math.sin(a), v.x * math.sin(a) + v.y * math.cos(a)
     )
+
+
+def load_class_from_file(path: str):
+    return pickle.loads(open(path, "rb").read())
