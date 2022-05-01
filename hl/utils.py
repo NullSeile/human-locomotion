@@ -24,11 +24,19 @@ def scale(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
 
 # Normalize array to [0, 1]
 def normalize(L: np.ndarray):
-    return (L - np.min(L)) / (np.max(L) - np.min(L))
+    max = np.max(L)
+    min = np.min(L)
+    
+    if max - min != 0:
+        return (L - min) / (max - min)
+    else: 
+        return L
+
 
 def to_distr(L: np.ndarray):
     norm = normalize(L)
     return norm / np.sum(norm)
+
 
 def deg2rad(deg: float) -> float:
     return deg * math.pi / 180
