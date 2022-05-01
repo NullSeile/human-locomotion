@@ -7,6 +7,8 @@ from Box2D import b2Vec2
 import os
 from pathlib import Path
 
+import numpy as np
+
 ASSETS_PATH = os.path.join(Path(__file__).parent.parent, "assets")
 DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/lil_man.json")
 
@@ -19,6 +21,14 @@ Vec2 = Tuple[float, float]
 def scale(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
     return y0 + ((y1 - y0) / (x1 - x0)) * (x - x0)
 
+
+# Normalize array to [0, 1]
+def normalize(L: np.ndarray):
+    return (L - np.min(L)) / (np.max(L) - np.min(L))
+
+def to_distr(L: np.ndarray):
+    norm = normalize(L)
+    return norm / np.sum(norm)
 
 def deg2rad(deg: float) -> float:
     return deg * math.pi / 180

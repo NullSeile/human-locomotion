@@ -21,7 +21,7 @@ from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 from hl.io.body_def import BodyDef
 
-from hl.utils import get_rgb_iris_index, ASSETS_PATH
+from hl.utils import get_rgb_iris_index, ASSETS_PATH, to_distr
 
 
 def create_a_world() -> Tuple[b2World, WorldObject]:
@@ -282,11 +282,13 @@ class Simulation:
         genomes_to_breed = int(len(genomes) * 0.3)
         s_gs = gs[:genomes_to_breed]
         s_genomes = [e[0] for e in s_gs]
-        s_distr = list(np.array([e[1] for e in s_gs]) / sum([e[1] for e in s_gs]))
+        s_scores = [e[1] for e in s_gs]
+        distr = to_distr(s_scores)
+
         for _ in tqdm(
             range(self.population_size - self.n_elite_genomes), desc="Breeding  "
         ):
-            genome = self.genome_breeder.get_genome_from_breed(s_genomes, s_distr)
+            genome = self.genome_breeder.get_genome_from_breed(s_genomes, distr)
             new_genomes.append(genome)
 
         return new_genomes
