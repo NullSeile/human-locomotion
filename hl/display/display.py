@@ -1,3 +1,4 @@
+import os
 import pygame
 from typing import Callable, Dict, Optional, List
 import multiprocessing as mp
@@ -10,8 +11,9 @@ from hl.simulation.genome.genome import Genome
 
 from hl.simulation.simulation import run_a_generation
 from hl.simulation.person import PersonSimulation
-from hl.display.draw import draw_world
+from hl.display.draw import draw_object, draw_person, draw_textured, draw_world
 from hl.simulation.world_object import WorldObject
+from hl.utils import ASSETS_PATH
 
 
 class GUI_Controller:
@@ -30,8 +32,16 @@ class GUI_Controller:
         self.data_queue: Optional[mp.Queue] = None
         self.quit_flag: Optional[Event] = None
 
+        self.center = (0, 2)
+
         pygame.font.init()
         self.font = pygame.font.SysFont("Comic Sans MS", 50)
+
+        self.floor_texture = pygame.image.load(
+            os.path.join(ASSETS_PATH, "imgs/floor.png")
+        )
+
+        self.clock = pygame.time.Clock()
 
         self.last_generation: int = 0
         self.last_genomes: Optional[List[Genome]] = None
@@ -44,7 +54,9 @@ class GUI_Controller:
         self.data_queue = data_queue
         self.quit_flag = quit_flag
 
-    def draw_loop(self, population: List[PersonSimulation], floor):
+    def draw_loop(
+        self, population: List[PersonSimulation], floor: WorldObject, fps: int
+    ):
         for event in pygame.event.get():
             if (
                 event.type == pygame.QUIT
@@ -63,7 +75,22 @@ class GUI_Controller:
         )
         self.screen.blit(textsurface, (0, -2))
 
-        draw_world(self.screen, population, floor)
+        people_x = [
+            p.person.parts["torso"].body.position.x
+            for p in population
+            if "torso" in p.person.parts
+        ]
+        if people_x:
+            cur_x = self.center[0]
+            target_x = max(people_x)
+            vel = (2 * (target_x - cur_x)) ** 3
+            new_x = cur_x + vel * (1 / fps)
+            self.center = (new_x, 2)
+
+        for p in population:
+            draw_person(p.person, self.screen, self.center, 2)
+
+        draw_textured(floor, self.floor_texture, self.screen, self.center, 2)
 
         pygame.display.flip()
         pygame.display.update()
@@ -71,7 +98,12 @@ class GUI_Controller:
         plt.draw()
         plt.pause(0.001)
 
+        self.clock.tick(fps)
+
     def draw_start(self, scores: Optional[List[float]], generation: int):
+
+        self.center = (0, 2)
+
         if scores is not None:
             self.avg_history[generation] = np.mean(scores)
             self.max_history[generation] = np.max(scores)
@@ -130,7 +162,9 @@ def display_async(
     last_scores: List[float],
     generation: int,
     draw_start: Optional[Callable[[Optional[List[float]], int], None]] = None,
-    draw_loop: Optional[Callable[[List[PersonSimulation], WorldObject], None]] = None,
+    draw_loop: Optional[
+        Callable[[List[PersonSimulation], WorldObject, int], None]
+    ] = None,
 ):
     if last_genomes is None:
         return

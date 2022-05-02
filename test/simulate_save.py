@@ -3,6 +3,8 @@ import sys
 import pickle
 from typing import List
 
+import numpy as np
+
 from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 
@@ -10,19 +12,26 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame
 from hl.io.body_def import BodyDef
 
-from hl.simulation.genome.sine_genome import SineGenome
+from hl.simulation.genome.sine_genome import SineGenome, SineGenomeBreeder
 from hl.simulation.simulation import run_a_generation
-from hl.utils import DEFAULT_BODY_PATH
-from hl.display.draw import draw_person, draw_object
+from hl.utils import DEFAULT_BODY_PATH, ASSETS_PATH
+from hl.display.draw import draw_person, draw_object, draw_textured
 
 path = input("Enter the genome file you want to watch: ")
-
 genome: SineGenome = pickle.loads(open(path, "rb").read())
+
+# genome = SineGenomeBreeder(DEFAULT_BODY_PATH).get_random_genome()
 
 screen = pygame.display.set_mode((1200, 600))
 
+texture = pygame.image.load(os.path.join(ASSETS_PATH, "imgs/floor.png"))
 
-def loop(population: List[PersonSimulation], floor: WorldObject):
+center = (2, 2)
+radius = 2
+clock = pygame.time.Clock()
+
+
+def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
     for event in pygame.event.get():
         if (
             event.type == pygame.QUIT
@@ -32,15 +41,33 @@ def loop(population: List[PersonSimulation], floor: WorldObject):
             sys.exit()
             return
 
+    global center
+
+    people_x = [
+        p.person.parts["torso"].body.position.x
+        for p in population
+        if "torso" in p.person.parts
+    ]
+
+    if people_x:
+        cur_x = center[0]
+        target_x = max(people_x)
+        vel = (2 * (target_x - cur_x)) ** 3
+        new_x = cur_x + vel * (1 / fps)
+        center = (new_x, 2)
+
     screen.fill((0, 0, 0))
 
     for p in population:
-        draw_person(p.person, screen, (2, 2), 2)
+        draw_person(p.person, screen, center, radius)
 
-    draw_object(floor, screen, (2, 2), 2)
+    draw_textured(floor, texture, screen, center, radius)
 
     pygame.display.flip()
     pygame.display.update()
+
+    global clock
+    clock.tick(fps)
 
 
 run_a_generation(

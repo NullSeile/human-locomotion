@@ -6,9 +6,6 @@ import pickle
 
 import os
 
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
-
-import pygame
 import numpy as np
 from tqdm import tqdm
 import threading
@@ -29,7 +26,7 @@ def create_a_world() -> Tuple[b2World, WorldObject]:
     floor = WorldObject(
         [(-50, 0.1), (50, 0.1), (50, -0.1), (-50, -0.1)],
         world,
-        (0, 0),
+        (40, 0),
         0,
         dynamic=False,
     )
@@ -58,7 +55,9 @@ def run_a_generation(
     fps: int,
     generation: int,
     draw_start: Optional[Callable[[Optional[List[float]], int], None]] = None,
-    draw_loop: Optional[Callable[[List[PersonSimulation], WorldObject], None]] = None,
+    draw_loop: Optional[
+        Callable[[List[PersonSimulation], WorldObject, int], None]
+    ] = None,
     scores: Optional[List[float]] = None,
 ) -> List[float]:
     world, floor = create_a_world()
@@ -68,7 +67,6 @@ def run_a_generation(
         draw_start(scores, generation)
 
     t = 0
-    clock = pygame.time.Clock()
     while not all([p.dead for p in population]):
         # Step in the world
         world.Step(1 / fps, 6 * 10, 3 * 10)
@@ -79,10 +77,9 @@ def run_a_generation(
 
         # Draw the world
         if draw_loop is not None:
-            draw_loop(population, floor)
+            draw_loop(population, floor, fps)
 
         t += 1
-        clock.tick(fps)
 
     return [p.score for p in population]
 
@@ -130,7 +127,7 @@ class Simulation:
         # Drawing
         draw_start: Optional[Callable] = None,
         draw_loop: Optional[
-            Callable[[List[PersonSimulation], WorldObject], None]
+            Callable[[List[PersonSimulation], WorldObject, int], None]
         ] = None,
     ):
         self.genome_breeder = genome_breeder
