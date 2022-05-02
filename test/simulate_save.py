@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 import pickle
@@ -17,10 +18,15 @@ from hl.simulation.simulation import run_a_generation
 from hl.utils import DEFAULT_BODY_PATH, ASSETS_PATH
 from hl.display.draw import draw_person, draw_object, draw_textured
 
-path = input("Enter the genome file you want to watch: ")
-genome: SineGenome = pickle.loads(open(path, "rb").read())
+parser = argparse.ArgumentParser()
+parser.add_argument("files", nargs="+", type=str)
+args = parser.parse_args()
+genomes: List[SineGenome] = [
+    pickle.loads(open(path, "rb").read()) for path in args.files
+]
 
-# genome = SineGenomeBreeder(DEFAULT_BODY_PATH).get_random_genome()
+# genome_breeder = SineGenomeBreeder(DEFAULT_BODY_PATH)
+# genomes = [genome_breeder.get_random_genome() for _ in range(3)]
 
 screen = pygame.display.set_mode((1200, 600))
 
@@ -72,7 +78,7 @@ def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
 
 run_a_generation(
     body_def=BodyDef(DEFAULT_BODY_PATH),
-    genomes=[genome],
+    genomes=genomes,
     fps=30,
     generation=0,
     draw_loop=loop,
