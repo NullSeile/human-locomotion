@@ -271,14 +271,17 @@ class Simulation:
         best_score = scores[best_index]
         if best_score > self.prev_best_score:
             self.prev_best_score = best_score
-            with open(
-                os.path.join(
-                    ASSETS_PATH,
-                    f"checkpoints/gen={self.generation_count}_score={best_score:.4f}.nye",
-                ),
-                "xb",
-            ) as file:
-                file.write(pickle.dumps(genomes[best_index]))
+            try:
+                with open(
+                    os.path.join(
+                        ASSETS_PATH,
+                        f"checkpoints/gen={self.generation_count}_score={best_score:.4f}.nye",
+                    ),
+                    "xb",
+                ) as file:
+                    file.write(pickle.dumps(genomes[best_index]))
+            except FileExistsError:
+                pass
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
 

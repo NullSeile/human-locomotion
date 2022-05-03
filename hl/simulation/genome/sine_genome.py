@@ -27,9 +27,15 @@ class SineGenome(Genome):
 
 
 class SineGenomeBreeder(GenomeBreeder):
-    def __init__(self, body_path: str, mutation_rate: float = 0.1):
+    def __init__(
+        self,
+        body_path: str,
+        mutation_rate: float = 0.1,
+        mutation_scale: float = 0.01,
+    ):
         super().__init__(body_path)
         self.mutation_rate = mutation_rate
+        self.mutation_scale = mutation_scale
 
     def get_empty_genome(self) -> SineGenome:
         genes = dict()
@@ -69,7 +75,7 @@ class SineGenomeBreeder(GenomeBreeder):
                 val = getattr(parent_genome.genes[joint_id], p)
 
                 if np.random.random() < mr:
-                    val += np.random.normal(scale=0.01)
+                    val += np.random.normal(scale=self.mutation_scale)
 
                 setattr(genome.genes[joint_id], p, val)
 
