@@ -185,7 +185,14 @@ class Simulation:
 
     def _create_initial_genomes(self) -> List[Genome]:
         if self.sample_genome is not None:
-            return [self.sample_genome] * self.population_size
+            genomes = [self.sample_genome]
+            for _ in range(self.population_size - len(genomes)):
+                genomes.append(
+                    self.genome_breeder.get_genome_from_breed(
+                        [self.sample_genome], [1], 1.0
+                    )
+                )
+            return genomes
         else:
             return [
                 self.genome_breeder.get_random_genome()

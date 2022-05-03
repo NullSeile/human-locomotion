@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -53,12 +53,24 @@ class SineGenomeBreeder(GenomeBreeder):
         self,
         parent_genomes: List[SineGenome],
         distr: List[float],
+        mutation_rate: Optional[float] = None,
     ) -> SineGenome:
+
+        mr = self.mutation_rate if mutation_rate is None else mutation_rate
 
         genome = self.get_random_genome()
         for joint_id in genome.genes:
             parent_genome: SineGenome = np.random.choice(parent_genomes, p=distr)
-            if np.random.random() > self.mutation_rate:
-                genome.genes[joint_id] = parent_genome.genes[joint_id]
+
+            params = ["amplitud", "frequency", "phase", "base"]
+
+            genome.genes[joint_id] = SineGene(0, 0, 0, 0)
+            for p in params:
+                val = getattr(parent_genome.genes[joint_id], p)
+
+                if np.random.random() < mr:
+                    val += np.random.normal(scale=0.01)
+
+                setattr(genome.genes[joint_id], p, val)
 
         return genome

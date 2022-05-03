@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from hl.io.body_def import BodyDef
 
@@ -27,6 +27,6 @@ class GenomeBreeder:
 
     @abstractmethod
     def get_genome_from_breed(
-        self, parent_genomes: List[Genome], distr: List[float]
+        self, parent_genomes: List[Genome], distr: List[float], mutation_rate: Optional[float] = None
     ) -> Genome:
         raise NotImplementedError()
