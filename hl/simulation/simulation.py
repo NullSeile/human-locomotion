@@ -256,17 +256,7 @@ class Simulation:
 
         return scores
 
-    def _breed(self, genomes: List[Genome], scores: List[float]) -> List[Genome]:
-        """
-        Breed the population.
-        """
-        print(f"max score: {max(scores):.3f}. avg score: {np.mean(scores):.3f}")
-
-        # Selecting the best genomes to keep for the next generation
-        gs = list(zip(genomes, scores))
-        gs = sorted(gs, key=lambda x: x[1], reverse=True)
-        elite_genomes = gs[: self.n_elite_genomes]
-
+    def _save_best(self, genomes: List[Genome], scores: List[float]):
         best_index = np.argmax(scores)
         best_score = scores[best_index]
         if best_score > self.prev_best_score:
@@ -282,6 +272,16 @@ class Simulation:
                     file.write(pickle.dumps(genomes[best_index]))
             except FileExistsError:
                 pass
+
+    def _breed(self, genomes: List[Genome], scores: List[float]) -> List[Genome]:
+        """
+        Breed the population.
+        """
+
+        # Selecting the best genomes to keep for the next generation
+        gs = list(zip(genomes, scores))
+        gs = sorted(gs, key=lambda x: x[1], reverse=True)
+        elite_genomes = gs[: self.n_elite_genomes]
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
 
@@ -336,10 +336,15 @@ class Simulation:
                 if self.parallel
                 else self._run_generation(genomes)
             )
+            print(f"max score: {max(scores):.3f}. avg score: {np.mean(scores):.3f}")
+
+            self._save_best(genomes, scores)
+
             self.add_last_genomes(genomes, scores)
             if self.forced_quit():
                 break
             genomes = self._breed(genomes, scores)
+            # genomes = self._create_initial_genomes()
             self.generation_count += 1
         if self.quit_flag is not None:
             self.quit_flag.set()
