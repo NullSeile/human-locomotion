@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 
 ASSETS_PATH = os.path.join(Path(__file__).parent.parent, "assets")
-DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/lil_man.json")
+DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/lil_foot.json")
 
 
 Color = Tuple[int, int, int, int]
@@ -26,10 +26,10 @@ def scale(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
 def normalize(L: np.ndarray):
     max = np.max(L)
     min = np.min(L)
-    
+
     if max - min != 0:
         return (L - min) / (max - min)
-    else: 
+    else:
         return L
 
 
