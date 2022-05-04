@@ -19,6 +19,7 @@ from hl.utils import DEFAULT_BODY_PATH, ASSETS_PATH
 from hl.display.draw import draw_person, draw_object, draw_textured
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--no_feet", "-nf", action="store_true")
 parser.add_argument("files", nargs="+", type=str)
 args = parser.parse_args()
 genomes: List[SineGenome] = [
@@ -76,8 +77,14 @@ def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
     clock.tick(fps)
 
 
+body_path = (
+    os.path.join(ASSETS_PATH, "bodies/lil_man.json")
+    if args.no_feet
+    else DEFAULT_BODY_PATH
+)
+
 run_a_generation(
-    body_def=BodyDef(DEFAULT_BODY_PATH),
+    body_def=BodyDef(body_path),
     genomes=genomes,
     fps=30,
     generation=0,
