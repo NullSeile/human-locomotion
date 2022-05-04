@@ -11,7 +11,7 @@ import multiprocessing as mp
 
 from hl.simulation.genome import get_genome_breeder, GENOME_CHOICES
 from hl.simulation.simulation import Simulation
-from hl.utils import DEFAULT_BODY_PATH, load_class_from_file
+from hl.utils import ASSETS_PATH, DEFAULT_BODY_PATH, load_class_from_file
 
 from hl.display.display import GUI_Controller
 
@@ -71,6 +71,7 @@ def get_arguments():
     #     choices=GENOME_CHOICES,
     #     help="The genome to use for the simulation.",
     # )
+    parser.add_argument("--no_feet", "-nf", action="store_true")
     parser.add_argument(
         "--sample", "-sg", type=str, help="Choose a genome save to begin the training"
     )
@@ -82,9 +83,15 @@ def get_arguments():
 if __name__ == "__main__":
     args = get_arguments()
 
+    body_path = (
+        os.path.join(ASSETS_PATH, "bodies/lil_man.json")
+        if args.no_feet
+        else DEFAULT_BODY_PATH
+    )
+
     fps = 30
     # genome_breeder = get_genome_breeder(args.genome, args.bodypath)
-    genome_breeder = SineGenomeBreeder(args.bodypath)
+    genome_breeder = SineGenomeBreeder(body_path)
 
     sample_genome = load_class_from_file(args.sample) if args.sample else None
 
