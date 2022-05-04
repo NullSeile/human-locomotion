@@ -119,10 +119,11 @@ class Simulation:
         fps: int = 30,
         frames_per_step: int = 5,
         population_size: int = 64,
+        n_elite_genomes: int = 4,
+        n_random_genomes: int = 2,
         # Parallel parameters
         parallel: bool = True,
         n_processes: int = 4,
-        n_elite_genomes: int = 4,
         quit_flag: Optional[Event] = None,
         # Drawing
         draw_start: Optional[Callable] = None,
@@ -132,6 +133,7 @@ class Simulation:
     ):
         self.genome_breeder = genome_breeder
         self.n_elite_genomes = n_elite_genomes
+        self.n_random_genomes = n_random_genomes
 
         self.sample_genome = sample_genome
 
@@ -169,7 +171,7 @@ class Simulation:
         threading.Thread(target=self.population_queue_manager.run).start()
 
     def add_last_genomes(
-        self, genomes: List[Genome], scores: Optional[List[float]], skip_if_blocked=True
+        self, genomes: List[Genome], scores: Optional[List[float]]
     ) -> None:
         """
         Add the last generation of genomes to the simulation. This
@@ -284,6 +286,10 @@ class Simulation:
         elite_genomes = gs[: self.n_elite_genomes]
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
+        
+        # Add random genomes
+        for _ in range(self.n_random_genomes):
+            new_genomes.append(self.genome_breeder.get_random_genome())
 
         # Select only the best 30% of genomes to breed
         genomes_to_breed = int(len(genomes) * 0.3)
@@ -293,7 +299,8 @@ class Simulation:
         distr = to_distr(s_scores)
 
         for _ in tqdm(
-            range(self.population_size - self.n_elite_genomes), desc="Breeding  "
+            range(self.population_size - self.n_elite_genomes - self.n_random_genomes),
+            desc="Breeding  ",
         ):
             genome = self.genome_breeder.get_genome_from_breed(s_genomes, distr)
             new_genomes.append(genome)
