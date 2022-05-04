@@ -4,7 +4,7 @@ from Box2D import b2World, b2Vec2
 from hl.io.body_def import BodyDef
 from hl.io.body_parser import parse_body
 from hl.utils import Vec2, Color
-from hl.simulation.metrics import average_leg_x, step_length
+from hl.simulation.metrics import average_leg_x, feet_delta, step_length
 from hl.simulation.genome.genome import Genome
 
 
@@ -60,8 +60,10 @@ class PersonSimulation:
         self.score = 0.0
         self.penalties = 0.0
 
+        # Metrics parameters
         self.initial_head_y = self.person.parts["head"].body.position.y
         self.head_y_delta_total = 0
+        self.feet_delta_total = 0
 
         self.idle_frames = 0
         self.idle_margin = 0.1
@@ -82,6 +84,8 @@ class PersonSimulation:
             self.person.parts["head"].body.position.y - self.initial_head_y
         )
 
+        self.feet_delta_total += feet_delta(self)
+
         if self._frames_count > 30:
             actual_pos_x = average_leg_x(self)
             if actual_pos_x < self.idle_max_pos_x + self.idle_margin:
@@ -94,6 +98,9 @@ class PersonSimulation:
 
         avg_delta_head_y = self.head_y_delta_total / self._frames_count
         self.penalties += avg_delta_head_y * 10.0
+
+        avg_feet_delta = abs(self.feet_delta_total / self._frames_count)
+        self.penalties += avg_feet_delta * 5.0
 
         return average_leg_x(self) - self.penalties
 
