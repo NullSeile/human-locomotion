@@ -160,7 +160,7 @@ class Simulation:
 
         self.generation_count = 0
 
-        self.prev_best_score = 0.0
+        self.prev_best_score = -np.inf
 
         self._fps = fps
         self.frames_per_step = frames_per_step
