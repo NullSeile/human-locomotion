@@ -18,7 +18,7 @@ from hl.simulation.person import PersonSimulation
 from hl.simulation.world_object import WorldObject
 from hl.io.body_def import BodyDef
 
-from hl.utils import get_rgb_iris_index, ASSETS_PATH, to_distr
+from hl.utils import Color, get_rgb_iris_index, ASSETS_PATH, to_distr
 
 
 def create_a_world() -> Tuple[b2World, WorldObject]:
@@ -34,7 +34,10 @@ def create_a_world() -> Tuple[b2World, WorldObject]:
 
 
 def create_a_population(
-    body_def: BodyDef, genomes: List[Genome], world: b2World
+    body_def: BodyDef,
+    genomes: List[Genome],
+    world: b2World,
+    color_function: Callable[[int, int], Color] = get_rgb_iris_index,
 ) -> List[PersonSimulation]:
     population: List[PersonSimulation] = []
     for i, genome in enumerate(genomes):
@@ -42,7 +45,7 @@ def create_a_population(
             body_def,
             genome,
             world,
-            get_rgb_iris_index(i, len(genomes)),
+            color_function(i, len(genomes)),
         )
         population.append(person)
 
@@ -59,9 +62,10 @@ def run_a_generation(
         Callable[[List[PersonSimulation], WorldObject, int], None]
     ] = None,
     scores: Optional[List[float]] = None,
+    color_function: Callable[[int, int], Color] = get_rgb_iris_index,
 ) -> List[float]:
     world, floor = create_a_world()
-    population = create_a_population(body_def, genomes, world)
+    population = create_a_population(body_def, genomes, world, color_function)
 
     if draw_start is not None:
         draw_start(scores, generation)
@@ -286,7 +290,7 @@ class Simulation:
         elite_genomes = gs[: self.n_elite_genomes]
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
-        
+
         # Add random genomes
         for _ in range(self.n_random_genomes):
             new_genomes.append(self.genome_breeder.get_random_genome())
