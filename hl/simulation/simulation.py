@@ -169,6 +169,13 @@ class Simulation:
         self._last_genomes_generation = self.generation_count
         self.quit_flag = quit_flag
 
+        import datetime
+
+        DATE = datetime.datetime.now().strftime("%d%m%Y_%H%M%S")
+
+        self.save_path = os.path.join(ASSETS_PATH, f"checkpoints/{DATE}")
+        os.makedirs(self.save_path)
+
     def add_parallel_params(self, queue: mp.Queue) -> None:
         assert self.quit_flag is not None
         self.population_queue_manager = SimulationQueuePutter(queue, self.quit_flag)
@@ -270,8 +277,8 @@ class Simulation:
             try:
                 with open(
                     os.path.join(
-                        ASSETS_PATH,
-                        f"checkpoints/gen={self.generation_count}_score={best_score:.4f}.nye",
+                        self.save_path,
+                        f"gen={self.generation_count}_score={best_score:.4f}.nye",
                     ),
                     "xb",
                 ) as file:

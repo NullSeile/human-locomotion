@@ -100,7 +100,7 @@ class PersonSimulation:
         self.penalties += avg_delta_head_y * 10.0
 
         avg_feet_delta = abs(self.feet_delta_total / self._frames_count)
-        self.penalties += avg_feet_delta * 5.0
+        self.penalties += avg_feet_delta * 1.0
 
         return average_leg_x(self) - self.penalties
 
