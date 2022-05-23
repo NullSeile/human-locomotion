@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from hl.simulation.genome.sine_genome import SineGenomeBreeder
+from hl.simulation.genome.sine_genome_symetric_v3 import SineGenomeBreeder
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 

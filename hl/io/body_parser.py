@@ -7,6 +7,7 @@ from hl.utils import Color, deg2rad, rotate, Vec2
 
 
 BODY_SCALE = 21
+TORQUE = 500
 
 
 def parse_body(
@@ -33,6 +34,7 @@ def parse_body(
             world=world,
             color=color if part["color"] == 0 else second_color,
             friction=0.9,
+            density=100,
             categoryBits=0x0002,
             maskBits=0xFFFF & ~0x0002,
         )
@@ -56,7 +58,12 @@ def parse_body(
                 jointDef.localAnchorA = b2Vec2(data["anchorA"]) / BODY_SCALE
                 jointDef.localAnchorB = b2Vec2(data["anchorB"]) / BODY_SCALE
                 jointDef.enableMotor = True
-                jointDef.maxMotorTorque = 500
+
+                torque_mult = 1
+                if "torque" in data:
+                    torque_mult = data["torque"]
+
+                jointDef.maxMotorTorque = 500 * torque_mult
 
                 next_angle = angle
                 if "angle" in data:

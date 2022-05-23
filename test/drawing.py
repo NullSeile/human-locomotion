@@ -7,7 +7,7 @@ from pygame.locals import QUIT, KEYDOWN, K_RETURN  # type: ignore
 from Box2D import b2World
 import sys
 
-from hl.utils import DEFAULT_BODY_PATH
+from hl.utils import DEFAULT_BODY_PATH, hsv2rgb
 from hl.io.body_def import BodyDef
 from hl.io.body_parser import parse_body
 from hl.display.draw import draw_object
@@ -24,6 +24,8 @@ walk0: Dict[str, float] = {
     "thigh_f-leg_f": -45,
     "torso-thigh_b": -5,
     "thigh_b-leg_b": -5,
+    "leg_f-foot_f": 0,
+    "leg_b-foot_b": 0,
 }
 root0 = -1
 
@@ -37,6 +39,8 @@ walk1: Dict[str, float] = {
     "thigh_f-leg_f": -10,
     "torso-thigh_b": -15,
     "thigh_b-leg_b": -10,
+    "leg_f-foot_f": 0,
+    "leg_b-foot_b": 0,
 }
 root1 = 0
 
@@ -50,18 +54,24 @@ walk2: Dict[str, float] = {
     "thigh_f-leg_f": -30,
     "torso-thigh_b": -25,
     "thigh_b-leg_b": -5,
+    "leg_f-foot_f": 0,
+    "leg_b-foot_b": 0,
 }
 root2 = -1
 
+
+nice_color = (251, 209, 121, 200)
+
 body_def = BodyDef(DEFAULT_BODY_PATH)
-parts0, joints0 = parse_body(body_def, world, (251, 209, 121, 200), walk0, root0)
-parts1, joints1 = parse_body(body_def, world, (251, 209, 121, 200), walk1, root1)
-parts2, joints2 = parse_body(body_def, world, (251, 209, 121, 200), walk2, root2)
+parts0, joints0 = parse_body(body_def, world, hsv2rgb(0.7, 0.5, 0.8, 0.5), walk0, root0)
+parts1, joints1 = parse_body(body_def, world, hsv2rgb(0.9, 0.5, 0.8, 0.5), walk1, root1)
+parts2, joints2 = parse_body(body_def, world, hsv2rgb(0.0, 0.5, 0.8, 0.5), walk2, root2)
 
 screen = pygame.display.set_mode((1100, 700))
 
-screen.fill((255, 255, 255, 0))
-# screen.fill("#C0C0C0")
+# screen.fill((255, 255, 255, 0))
+# screen.fill("#EFEFEF")
+screen.fill((0, 0, 0, 0))
 
 for part in parts0.values():
     draw_object(part, screen, (1, 1), 1)

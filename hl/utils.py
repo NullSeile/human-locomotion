@@ -19,7 +19,11 @@ Vec2 = Tuple[float, float]
 
 # Maps a float x, which goes from x0 to x1, to go from y0 to y1
 def scale(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
-    return y0 + ((y1 - y0) / (x1 - x0)) * (x - x0)
+    try:
+        return y0 + ((y1 - y0) / (x1 - x0)) * (x - x0)
+    except:
+        print(f"x={x}, x0={x0}, x1={x1}, y0={y0}, y1={y1}")
+        raise
 
 
 # Normalize array to [0, 1]

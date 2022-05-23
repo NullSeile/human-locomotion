@@ -22,19 +22,28 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--no_feet", "-nf", action="store_true")
 parser.add_argument("files", nargs="+", type=str)
 args = parser.parse_args()
+
+
+body_path = (
+    os.path.join(ASSETS_PATH, "bodies/lil_man.json")
+    if args.no_feet
+    else DEFAULT_BODY_PATH
+)
+
 genomes: List[SineGenome] = [
     pickle.loads(open(path, "rb").read()) for path in args.files
 ]
 
-# genome_breeder = SineGenomeBreeder(DEFAULT_BODY_PATH)
-# genomes = [genome_breeder.get_random_genome() for _ in range(3)]
+# body_path = DEFAULT_BODY_PATH
+# genome_breeder = SineGenomeBreeder(body_path)
+# genomes = [genome_breeder.get_random_genome() for _ in range(1)]
 
 screen = pygame.display.set_mode((1200, 600))
 
 texture = pygame.image.load(os.path.join(ASSETS_PATH, "imgs/floor.png"))
 
-center = (2, 2)
-radius = 2
+radius = 1.5
+center = (2, radius)
 clock = pygame.time.Clock()
 
 
@@ -61,7 +70,7 @@ def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
         target_x = max(people_x)
         vel = (2 * (target_x - cur_x)) ** 3
         new_x = cur_x + vel * (1 / fps)
-        center = (new_x, 2)
+        center = (new_x, center[1])
 
     screen.fill((0, 0, 0))
 
@@ -77,11 +86,11 @@ def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
     clock.tick(fps)
 
 
-body_path = (
-    os.path.join(ASSETS_PATH, "bodies/lil_man.json")
-    if args.no_feet
-    else DEFAULT_BODY_PATH
-)
+start = False
+while not start:
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            start = True
 
 run_a_generation(
     body_def=BodyDef(body_path),
@@ -89,4 +98,5 @@ run_a_generation(
     fps=30,
     generation=0,
     draw_loop=loop,
+    color_function=lambda i, n: (255, 255, 255, 255),
 )

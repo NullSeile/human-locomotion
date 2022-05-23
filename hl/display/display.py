@@ -169,7 +169,7 @@ def display_async(
     if last_genomes is None:
         return
 
-    N_ELEMENTS = 16
+    N_ELEMENTS = 8
 
     if last_scores is not None:
         gs = list(zip(last_genomes, last_scores))

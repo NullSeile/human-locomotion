@@ -124,6 +124,7 @@ class Simulation:
         frames_per_step: int = 5,
         population_size: int = 64,
         n_elite_genomes: int = 4,
+        n_mutation_genomes: int = 5,
         n_random_genomes: int = 2,
         # Parallel parameters
         parallel: bool = True,
@@ -136,13 +137,23 @@ class Simulation:
         ] = None,
     ):
         self.genome_breeder = genome_breeder
+
+        self.population_size = population_size
+
         self.n_elite_genomes = n_elite_genomes
+        self.n_mutation_genomes = n_mutation_genomes
         self.n_random_genomes = n_random_genomes
+
+        self.n_breed_genomes = (
+            self.population_size
+            - self.n_elite_genomes
+            - self.n_mutation_genomes
+            - self.n_random_genomes
+        )
 
         self.sample_genome = sample_genome
 
         self.parallel = parallel
-        self.population_size = population_size
         self.n_processes = n_processes
 
         if self.parallel:
@@ -270,6 +281,9 @@ class Simulation:
         return scores
 
     def _save_best(self, genomes: List[Genome], scores: List[float]):
+        with open(os.path.join(self.save_path, "scores.nyasu"), "a") as file:
+            file.write(f"{' '.join([f'{s:.3f}' for s in scores])}\n")
+
         best_index = np.argmax(scores)
         best_score = scores[best_index]
         if best_score > self.prev_best_score:
@@ -298,20 +312,29 @@ class Simulation:
 
         new_genomes: List[Genome] = [e[0] for e in elite_genomes]
 
+        for _ in range(self.n_mutation_genomes):
+            new_genomes.append(
+                self.genome_breeder.get_genome_from_breed(
+                    [gs[0][0]],  # Best genome
+                    [1],
+                    0.3,
+                )
+            )
+
         # Add random genomes
         for _ in range(self.n_random_genomes):
             new_genomes.append(self.genome_breeder.get_random_genome())
 
-        # Select only the best 30% of genomes to breed
-        genomes_to_breed = int(len(genomes) * 0.3)
+        # Select only the best 50% of genomes to breed
+        genomes_to_breed = int(len(genomes) * 0.5)
         s_gs = gs[:genomes_to_breed]
         s_genomes = [e[0] for e in s_gs]
         s_scores = [e[1] for e in s_gs]
         distr = to_distr(s_scores)
 
         for _ in tqdm(
-            range(self.population_size - self.n_elite_genomes - self.n_random_genomes),
-            desc="Breeding  ",
+            range(self.n_breed_genomes),
+            desc="Breeding",
         ):
             genome = self.genome_breeder.get_genome_from_breed(s_genomes, distr)
             new_genomes.append(genome)
