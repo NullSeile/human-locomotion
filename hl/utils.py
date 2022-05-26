@@ -11,6 +11,7 @@ import numpy as np
 
 ASSETS_PATH = os.path.join(Path(__file__).parent.parent, "assets")
 DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/lil_foot.json")
+# DEFAULT_BODY_PATH = os.path.join(ASSETS_PATH, "bodies/lil_foot_bend.json")
 
 
 Color = Tuple[int, int, int, int]
@@ -44,6 +45,10 @@ def to_distr(L: np.ndarray):
 
 def deg2rad(deg: float) -> float:
     return deg * math.pi / 180
+
+
+def rad2deg(rad: float) -> float:
+    return rad * 180 / math.pi
 
 
 def hsv2rgb(h: float, s: float, v: float, a: float = 1):

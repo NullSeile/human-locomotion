@@ -1,39 +1,24 @@
 import argparse
 import os
 import sys
-import pickle
-from typing import List
-
-import numpy as np
-
-from hl.simulation.person import PersonSimulation
-from hl.simulation.world_object import WorldObject
+from typing import Dict, List
+from matplotlib import pyplot as plt
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame
 from hl.io.body_def import BodyDef
-
+from hl.simulation.person import PersonSimulation
+from hl.simulation.world_object import WorldObject
+from hl.utils import ASSETS_PATH, DEFAULT_BODY_PATH, load_class_from_file, rad2deg
+from hl.simulation.genome.sine_genome_symetric_v3 import SineGenome
 from hl.simulation.simulation import run_a_generation
-from hl.utils import DEFAULT_BODY_PATH, ASSETS_PATH
-from hl.display.draw import draw_person, draw_object, draw_textured
+from hl.display.draw import draw_person, draw_textured
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--no_feet", "-nf", action="store_true")
-parser.add_argument("files", nargs="+", type=str)
+parser.add_argument("file", type=str)
 args = parser.parse_args()
 
-
-body_path = (
-    os.path.join(ASSETS_PATH, "bodies/lil_man.json")
-    if args.no_feet
-    else DEFAULT_BODY_PATH
-)
-
-genomes = [pickle.loads(open(path, "rb").read()) for path in args.files]
-
-# body_path = DEFAULT_BODY_PATH
-# genome_breeder = SineGenomeBreeder(body_path)
-# genomes = [genome_breeder.get_random_genome() for _ in range(1)]
+genome: SineGenome = load_class_from_file(args.file)
 
 screen = pygame.display.set_mode((1200, 600))
 
@@ -42,6 +27,10 @@ texture = pygame.image.load(os.path.join(ASSETS_PATH, "imgs/floor.png"))
 radius = 1.5
 center = (2, radius)
 clock = pygame.time.Clock()
+
+body_def = BodyDef(DEFAULT_BODY_PATH)
+
+angles: Dict[str, List[float]] = {k: [] for k in body_def.joints.keys()}
 
 
 def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
@@ -71,16 +60,19 @@ def loop(population: List[PersonSimulation], floor: WorldObject, fps: int):
 
     screen.fill((0, 0, 0))
 
-    for p in population:
-        draw_person(p.person, screen, center, radius)
+    p = population[0]
+    for joint_id, joint in p.person.joints.items():
+        angles[joint_id].append(rad2deg(joint.angle))
+
+    draw_person(p.person, screen, center, radius)
 
     draw_textured(floor, texture, screen, center, radius)
 
     pygame.display.flip()
     pygame.display.update()
 
-    global clock
-    clock.tick(fps)
+    # global clock
+    # clock.tick(fps)
 
 
 start = False
@@ -90,10 +82,14 @@ while not start:
             start = True
 
 run_a_generation(
-    body_def=BodyDef(body_path),
-    genomes=genomes,
+    body_def=body_def,
+    genomes=[genome],
     fps=30,
     generation=0,
     draw_loop=loop,
     color_function=lambda i, n: (255, 255, 255, 255),
 )
+
+plt.plot(angles["torso-thigh_f"])
+# plt.plot(angles["leg_b-foot_b"])
+plt.show()
