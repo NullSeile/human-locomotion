@@ -6,6 +6,7 @@ from Box2D import (
     b2PolygonShape,
     b2FixtureDef,
     b2Body,
+    b2Fixture,
     b2Vec2,
     b2_dynamicBody,
     b2_staticBody,
@@ -24,6 +25,7 @@ class WorldObject:
         color: Color = (255, 255, 255, 255),
         dynamic: bool = True,
         friction: float = 0.5,
+        restitution: float = 0.2,
         density: float = 1,
         categoryBits: int = 0x0001,
         maskBits: int = 0xFFFF,
@@ -33,16 +35,18 @@ class WorldObject:
         self.shape = b2PolygonShape()
         self.shape.vertices = vertices
 
-        self.fixture = b2FixtureDef(
+        self.fixture_def = b2FixtureDef(
             shape=self.shape,
             density=density,
             friction=friction,
+            restitution=restitution,
             categoryBits=categoryBits,
             maskBits=maskBits,
         )
         self.body: b2Body = world.CreateBody(
             type=b2_dynamicBody if dynamic else b2_staticBody,
-            fixtures=self.fixture,
+            fixtures=self.fixture_def,
             position=pos,
             angle=angle,
         )
+        self.fixture: b2Fixture = self.body.fixtures[0]
