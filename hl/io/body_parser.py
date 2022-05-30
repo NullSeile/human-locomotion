@@ -63,7 +63,7 @@ def parse_body(
                 if "torque" in data:
                     torque_mult = data["torque"]
 
-                jointDef.maxMotorTorque = 500 * torque_mult
+                jointDef.maxMotorTorque = TORQUE * torque_mult
 
                 next_angle = angle
                 if "angle" in data:

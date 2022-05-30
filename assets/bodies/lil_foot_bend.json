@@ -1,0 +1,136 @@
+{
+    "root": "torso",
+    "pos": [0, 1.35],
+    "body": {
+        "biceps_b": {
+            "vertices": [[1.5, 4.5], [-1.5, 4.5], [-1.5, -4.5], [1.5, -4.5]],
+            "color": 1,
+            "children": {
+                "arm_b": {
+                    "anchorA": [0, -4.5],
+                    "anchorB": [0, 4],
+                    "angle": {"min": 0, "max": 150}
+                }
+            }
+        },
+        "arm_b": {
+            "vertices": [[1, 4], [-1, 4], [-1, -4], [1, -4]],
+            "color": 1
+        },
+        "thigh_b": {
+            "vertices": [[2, 4.5], [-2, 4.5], [-2, -4.5], [2, -4.5]],
+            "color": 1,
+            "children": {
+                "leg_b": {
+                    "anchorA": [0, -4.5],
+                    "anchorB": [0, 8.5],
+                    "angle": {"min": -120, "max": 0}
+                }
+            }
+        },
+        "leg_b": {
+            "vertices": [[1, 0.5], [1, 8.5], [-1, 8.5], [-1, 0.5]],
+            "color": 1,
+            "children": {
+                "foot_b": {
+                    "anchorA": [0, 0.5],
+                    "anchorB": [-1, 1],
+                    "angle": {"min": -40, "max": 10},
+                    "torque": 0.2
+                }
+            }
+        },
+        "foot_b": {
+            "vertices": [[-2, 1], [2, 1], [2, -0.5], [-2, -0.5]],
+            "color": 1
+        },
+        "head": {
+            "vertices": [[2.5, 2.5], [-2.5, 2.5], [-2.5, -2.5], [2.5, -2.5]],
+            "color": 0
+        },
+        "torso": {
+            "vertices": [[3, 6], [-3, 6], [-3, 0], [3, 0]],
+            "color": 0,
+            "children": {
+                "head": {
+                    "anchorA": [0, 6],
+                    "anchorB": [0, -2.5],
+                    "angle": {"min": -80, "max": 30}
+                },
+                "abdomen": {
+                    "anchorA": [0, 0],
+                    "anchorB": [0, 0],
+                    "angle": {"min": -10, "max": 30}
+                },
+                "biceps_f": {
+                    "anchorA": [0, 5],
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -70, "max": 180}
+                },
+                "biceps_b": {
+                    "anchorA": [0, 5],
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -70, "max": 180}
+                }
+            }
+        },
+        "abdomen": {
+            "vertices": [[3, 0], [-3, 0], [-3, -6], [3, -6]],
+            "color": 0,
+            "children": {
+                "thigh_f": {
+                    "anchorA": [0, -6],
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -45, "max": 90}
+                },
+                "thigh_b": {
+                    "anchorA": [0, -6],
+                    "anchorB": [0, 4.5],
+                    "angle": {"min": -45, "max": 90}
+                }
+            }
+        },
+        "thigh_f": {
+            "vertices": [[2, 4.5], [-2, 4.5], [-2, -4.5], [2, -4.5]],
+            "color": 0,
+            "children": {
+                "leg_f": {
+                    "anchorA": [0, -4.5],
+                    "anchorB": [0, 8.5],
+                    "angle": {"min": -120, "max": 0}
+                }
+            }
+        },
+        "leg_f": {
+            "vertices": [[1, 0.5], [1, 8.5], [-1, 8.5], [-1, 0.5]],
+            "color": 0,
+            "children": {
+                "foot_f": {
+                    "anchorA": [0, 0.5],
+                    "anchorB": [-1, 1],
+                    "angle": {"min": -40, "max": 10},
+                    "torque": 0.2
+                }
+            }
+        },
+        "foot_f": {
+            "vertices": [[-2, 1], [2, 1], [2, -0.5], [-2, -0.5]],
+            "color": 0
+        },
+        "biceps_f": {
+            "vertices": [[1.5, 4.5], [-1.5, 4.5], [-1.5, -4.5], [1.5, -4.5]],
+            "color": 0,
+            "children": {
+                "arm_f": {
+                    "anchorA": [0, -4.5],
+                    "anchorB": [0, 4],
+                    "angle": {"min": 0, "max": 150}
+                }
+            }
+        },
+        "arm_f": {
+            "vertices": [[1, 4], [-1, 4], [-1, -4], [1, -4]],
+            "color": 0
+        }
+    }
+}

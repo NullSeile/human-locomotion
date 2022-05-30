@@ -17,12 +17,14 @@ LIMITS: Dict[str, Tuple[float, float]] = {
 class JointType(Enum):
     TORSO_HEAD = auto()
 
-    TORSO_THIGH = auto()
-    THIGH_LEG = auto()
-    LEG_FOOT = auto()
-
     TORSO_BICEPS = auto()
     BICEPS_ARM = auto()
+
+    TORSO_ABDOMEN = auto()
+
+    ABDOMEN_THIGH = auto()
+    THIGH_LEG = auto()
+    LEG_FOOT = auto()
 
 
 class SineGene:
@@ -55,8 +57,10 @@ class SineGenome(Genome):
 
         values["torso-head"] = self._func(self.genes[JointType.TORSO_HEAD], t)
 
-        values["torso-thigh_f"] = self._func(self.genes[JointType.TORSO_THIGH], t)
-        values["torso-thigh_b"] = -self._func(self.genes[JointType.TORSO_THIGH], t)
+        values["torso-abdomen"] = self._func(self.genes[JointType.TORSO_ABDOMEN], t)
+
+        values["abdomen-thigh_f"] = self._func(self.genes[JointType.ABDOMEN_THIGH], t)
+        values["abdomen-thigh_b"] = -self._func(self.genes[JointType.ABDOMEN_THIGH], t)
 
         values["thigh_f-leg_f"] = self._func(self.genes[JointType.THIGH_LEG], t)
         values["thigh_b-leg_b"] = -self._func(self.genes[JointType.THIGH_LEG], t)
@@ -78,7 +82,7 @@ class SineGenomeBreeder(GenomeBreeder):
         self,
         body_path: str,
         mutation_rate: float = 0.2,
-        mutation_scale: float = 0.1,
+        mutation_scale: float = 0.5,
     ):
         super().__init__(body_path)
         self.mutation_rate = mutation_rate
@@ -86,7 +90,7 @@ class SineGenomeBreeder(GenomeBreeder):
 
     def get_empty_genome(self) -> SineGenome:
         genes: Dict[JointType, JointGene] = dict()
-        for joint_id in JointType:
+        for joint_id in self.body_def.joints:
             genes[joint_id] = [SineGene(0, 0)] * FOURIER_COUNT
 
         return SineGenome(genes, 0)
