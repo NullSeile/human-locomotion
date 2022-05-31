@@ -29,6 +29,7 @@ def create_a_world() -> Tuple[b2World, WorldObject]:
         (40, 0),
         0,
         dynamic=False,
+        restitution=0,
     )
     return world, floor
 

@@ -18,22 +18,17 @@ from hl.utils import DEFAULT_BODY_PATH, ASSETS_PATH
 from hl.display.draw import draw_person, draw_object, draw_textured
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--no_feet", "-nf", action="store_true")
 parser.add_argument("files", nargs="+", type=str)
 args = parser.parse_args()
 
 
-body_path = (
-    os.path.join(ASSETS_PATH, "bodies/lil_man.json")
-    if args.no_feet
-    else DEFAULT_BODY_PATH
-)
+body_path = DEFAULT_BODY_PATH
 
 genomes = [pickle.loads(open(path, "rb").read()) for path in args.files]
 
-# body_path = DEFAULT_BODY_PATH
+# from hl.simulation.genome.sine_genome_symetric_v3 import SineGenomeBreeder
 # genome_breeder = SineGenomeBreeder(body_path)
-# genomes = [genome_breeder.get_random_genome() for _ in range(1)]
+# genomes = [genome_breeder.get_random_genome() for _ in range(10)]
 
 screen = pygame.display.set_mode((1200, 600))
 

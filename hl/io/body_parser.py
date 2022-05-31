@@ -35,6 +35,7 @@ def parse_body(
             color=color if part["color"] == 0 else second_color,
             friction=0.9,
             density=100,
+            restitution=0,
             categoryBits=0x0002,
             maskBits=0xFFFF & ~0x0002,
         )
